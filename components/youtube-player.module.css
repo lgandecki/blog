@@ -1,0 +1,61 @@
+.container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background-color: #000;
+}
+
+.thumbnailFacade {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.thumbnailImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease-in-out;
+}
+
+.thumbnailFacade:hover .thumbnailImage {
+  transform: scale(1.05);
+}
+
+.playButton {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  width: 70px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background-color: rgba(255, 0, 0, 0.9);
+  transform: translate(-50%, -50%);
+  transition: background-color 0.2s ease-in-out;
+}
+
+.thumbnailFacade:hover .playButton {
+  background-color: rgba(255, 0, 0, 1);
+}
+
+.playButton::before {
+  content: '';
+  margin-left: 5px;
+  border-style: solid;
+  border-width: 12px 0 12px 20px;
+  border-color: transparent transparent transparent #fff;
+}
+
+.iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
