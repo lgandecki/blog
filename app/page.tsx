@@ -160,13 +160,13 @@ export default function Page() {
               <div className="relative">
                 <YouTubePlayer videoId="Kcka7rzcxLk" start={15} />
               </div>
-              <div className="flex items-center justify-center bg-white p-6 dark:bg-white">
+              <div className="featured-talk-side flex items-center justify-center p-6">
                 <Image
                   src="/assets/ai-engineer-logo.svg"
                   alt="AI Engineer logo"
                   width={220}
                   height={160}
-                  className="h-32 w-auto dark:invert"
+                  className="featured-talk-logo h-32 w-auto"
                 />
               </div>
             </div>

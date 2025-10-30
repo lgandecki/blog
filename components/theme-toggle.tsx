@@ -5,9 +5,10 @@ import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 export function ThemeToggle() {
-  let { theme, setTheme } = useTheme()
+  let { resolvedTheme, setTheme } = useTheme()
   let [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -18,17 +19,24 @@ export function ThemeToggle() {
     return null
   }
 
+  const currentTheme = resolvedTheme ?? 'light'
+  const isDark = currentTheme === 'dark'
+  const nextMode = isDark ? 'light' : 'dark'
+  const iconClass = 'absolute inset-0 m-auto h-5 w-5 transition-all'
+  const visibleIcon = 'rotate-0 scale-100 opacity-100'
+  const hiddenIcon = 'rotate-90 scale-0 opacity-0'
+
   return (
     <Button
       variant="ghost"
       size="icon"
       type="button"
-      aria-label="Toggle theme"
-      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+      aria-label={`Activate ${nextMode} mode`}
+      onClick={() => setTheme(nextMode)}
       className="relative hover:bg-accent/10"
     >
-      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 dark:opacity-0" />
-      <Moon className="absolute inset-0 m-auto h-5 w-5 rotate-90 scale-0 opacity-0 transition-all dark:rotate-0 dark:scale-100 dark:opacity-100" />
+      <Sun className={cn(iconClass, isDark ? hiddenIcon : visibleIcon)} />
+      <Moon className={cn(iconClass, isDark ? visibleIcon : hiddenIcon)} />
     </Button>
   )
 }
