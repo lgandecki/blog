@@ -26,7 +26,7 @@ const codeProjects = [
   {
     title: 'wait-for-expect',
     description: 'Wait for expectation to be true.',
-    downloads: '3.5 mln weekly downloads.',
+    downloads: '3.5 mln monthly downloads.',
     type: 'npm',
     link: 'https://www.npmjs.com/package/wait-for-expect',
     tags: ['tooling', 'jest', 'testing'],
