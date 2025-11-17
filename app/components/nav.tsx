@@ -20,16 +20,19 @@ export function Navbar() {
   if (isHome) {
     return (
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
+        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+          <Link
+            href="/"
+            className="text-sm sm:text-base md:text-lg font-semibold tracking-tight whitespace-nowrap flex-shrink-0"
+          >
             Łukasz Gandecki
           </Link>
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 sm:gap-6 md:gap-8 min-w-0">
             {homeSections.map(({ href, label }) => (
               <a
                 key={href}
                 href={href}
-                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="text-xs sm:text-sm text-muted-foreground transition-colors hover:text-foreground whitespace-nowrap"
               >
                 {label}
               </a>
@@ -43,13 +46,16 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between px-6">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight">
-            Łukasz Gandecki
-          </Link>
+      <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+        <Link
+          href="/"
+          className="text-sm sm:text-base md:text-lg font-semibold tracking-tight whitespace-nowrap flex-shrink-0"
+        >
+          Łukasz Gandecki
+        </Link>
+        <div className="flex-shrink-0">
+          <ThemeToggle />
         </div>
-        <ThemeToggle />
       </div>
     </header>
   );
