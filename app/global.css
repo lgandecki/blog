@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -131,22 +131,7 @@
 
 html {
   min-width: 360px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --sh-class: #4c97f8;
-    --sh-identifier: #f8fafc;
-    --sh-keyword: #f47067;
-    --sh-string: #0fa295;
-    --sh-sign: #a5b4fc;
-    --sh-comment: #94a3b8;
-    --sh-property: #f59e0b;
-    --sh-entity: #f59e0b;
-  }
-  html {
-    color-scheme: dark;
-  }
+  overflow-x: hidden;
 }
 
 .dark {
@@ -167,7 +152,9 @@ html {
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'kern' 1, 'liga' 1;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -207,7 +194,7 @@ html {
 
 .prose .anchor:after {
   @apply text-neutral-300;
-  content: '#';
+  content: "#";
 }
 
 .dark .prose .anchor:after {
@@ -293,8 +280,8 @@ pre {
 }
 
 /* Remove Safari input shadow on mobile */
-input[type='text'],
-input[type='email'] {
+input[type="text"],
+input[type="email"] {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
