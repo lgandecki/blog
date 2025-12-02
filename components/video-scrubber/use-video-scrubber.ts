@@ -593,6 +593,42 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
     updatePlayhead();
   }, [updatePlayhead, currentFrame]);
 
+  // Switch to high quality video once it's ready after initial load
+  useEffect(() => {
+    if (isLoading || !metadata || showVideo) return;
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    let cancelled = false;
+
+    const onSeeked = () => {
+      if (!cancelled) {
+        setShowVideo(true);
+      }
+    };
+
+    const onCanPlay = () => {
+      if (cancelled) return;
+      video.removeEventListener("canplay", onCanPlay);
+      video.addEventListener("seeked", onSeeked, { once: true });
+      video.currentTime = 0;
+    };
+
+    if (video.readyState >= 1) {
+      video.addEventListener("seeked", onSeeked, { once: true });
+      video.currentTime = 0;
+    } else {
+      video.addEventListener("canplay", onCanPlay);
+    }
+
+    return () => {
+      cancelled = true;
+      video.removeEventListener("canplay", onCanPlay);
+      video.removeEventListener("seeked", onSeeked);
+    };
+  }, [isLoading, metadata, showVideo]);
+
   // Playback sync
   useEffect(() => {
     if (!isPlaying) return;
