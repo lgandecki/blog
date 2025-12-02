@@ -593,42 +593,6 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
     updatePlayhead();
   }, [updatePlayhead, currentFrame]);
 
-  // Switch to high quality video once it's ready after initial load
-  useEffect(() => {
-    if (isLoading || !metadata || showVideo) return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    let cancelled = false;
-
-    const onSeeked = () => {
-      if (!cancelled) {
-        setShowVideo(true);
-      }
-    };
-
-    const onCanPlay = () => {
-      if (cancelled) return;
-      video.removeEventListener("canplay", onCanPlay);
-      video.addEventListener("seeked", onSeeked, { once: true });
-      video.currentTime = 0;
-    };
-
-    if (video.readyState >= 1) {
-      video.addEventListener("seeked", onSeeked, { once: true });
-      video.currentTime = 0;
-    } else {
-      video.addEventListener("canplay", onCanPlay);
-    }
-
-    return () => {
-      cancelled = true;
-      video.removeEventListener("canplay", onCanPlay);
-      video.removeEventListener("seeked", onSeeked);
-    };
-  }, [isLoading, metadata, showVideo]);
-
   // Playback sync
   useEffect(() => {
     if (!isPlaying) return;
@@ -705,6 +669,24 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
   }, [togglePlayback, stepFrame, callbacks]);
 
   // Handle scrubbing
+  const startScrubbing = useCallback(
+    (e: React.MouseEvent) => {
+      wasPlayingBeforeScrubRef.current = isPlaying;
+      isScrubbingRef.current = true;
+
+      // Switch to canvas view for scrubbing
+      if (showVideo) {
+        setShowVideo(false);
+      }
+
+      // Notify tutorial that scrubbing started
+      callbacks?.onScrub?.();
+
+      handleScrub(e);
+    },
+    [isPlaying, showVideo, callbacks]
+  );
+
   const handleScrub = useCallback(
     (e: React.MouseEvent | MouseEvent) => {
       const rect = filmstripRectRef.current;
@@ -738,24 +720,6 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
       }
     },
     [metadata, isPlaying, pause, seekToFrame]
-  );
-
-  const startScrubbing = useCallback(
-    (e: React.MouseEvent) => {
-      wasPlayingBeforeScrubRef.current = isPlaying;
-      isScrubbingRef.current = true;
-
-      // Switch to canvas view for scrubbing
-      if (showVideo) {
-        setShowVideo(false);
-      }
-
-      // Notify tutorial that scrubbing started
-      callbacks?.onScrub?.();
-
-      handleScrub(e);
-    },
-    [isPlaying, showVideo, callbacks, handleScrub]
   );
 
   const endScrubbing = useCallback(() => {
