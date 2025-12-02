@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { CustomMDX } from "app/components/mdx";
-import { formatDate, getBlogPosts } from "app/blog/utils";
-import { baseUrl } from "app/sitemap";
+import { CustomMDX } from "app/(main)/components/mdx";
+import { formatDate, getBlogPosts } from "app/(main)/blog/utils";
+import { baseUrl } from "app/(main)/sitemap";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
