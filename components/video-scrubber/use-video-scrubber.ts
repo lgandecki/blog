@@ -705,24 +705,6 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
   }, [togglePlayback, stepFrame, callbacks]);
 
   // Handle scrubbing
-  const startScrubbing = useCallback(
-    (e: React.MouseEvent) => {
-      wasPlayingBeforeScrubRef.current = isPlaying;
-      isScrubbingRef.current = true;
-
-      // Switch to canvas view for scrubbing
-      if (showVideo) {
-        setShowVideo(false);
-      }
-
-      // Notify tutorial that scrubbing started
-      callbacks?.onScrub?.();
-
-      handleScrub(e);
-    },
-    [isPlaying, showVideo, callbacks]
-  );
-
   const handleScrub = useCallback(
     (e: React.MouseEvent | MouseEvent) => {
       const rect = filmstripRectRef.current;
@@ -756,6 +738,24 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
       }
     },
     [metadata, isPlaying, pause, seekToFrame]
+  );
+
+  const startScrubbing = useCallback(
+    (e: React.MouseEvent) => {
+      wasPlayingBeforeScrubRef.current = isPlaying;
+      isScrubbingRef.current = true;
+
+      // Switch to canvas view for scrubbing
+      if (showVideo) {
+        setShowVideo(false);
+      }
+
+      // Notify tutorial that scrubbing started
+      callbacks?.onScrub?.();
+
+      handleScrub(e);
+    },
+    [isPlaying, showVideo, callbacks, handleScrub]
   );
 
   const endScrubbing = useCallback(() => {
