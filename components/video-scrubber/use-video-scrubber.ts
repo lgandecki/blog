@@ -34,6 +34,27 @@ export interface PlayableRegion {
   end: number;
 }
 
+export interface TimeRange {
+  start: number;
+  end: number | null;
+}
+
+// Parse compact time format like "3m6s" or "1h2m30s" to seconds
+function parseCompactTime(timeStr: string): number | null {
+  if (!timeStr) return null;
+
+  const regex = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/;
+  const match = timeStr.match(regex);
+
+  if (!match) return null;
+
+  const hours = parseInt(match[1] || "0", 10);
+  const minutes = parseInt(match[2] || "0", 10);
+  const seconds = parseInt(match[3] || "0", 10);
+
+  return hours * 3600 + minutes * 60 + seconds;
+}
+
 export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoScrubberCallbacks) {
   // State
   const [metadata, setMetadata] = useState<SpriteMetadata | null>(null);
@@ -44,6 +65,7 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
   const [skipSilence, setSkipSilence] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [showVideo, setShowVideo] = useState(false); // false = show canvas, true = show video
+  const [timeRange, setTimeRange] = useState<TimeRange | null>(null); // URL time range (?t=&e=)
 
   // Refs
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -73,6 +95,9 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
 
   // Track if we've initialized to avoid re-running setup
   const hasInitializedRef = useRef(false);
+
+  // Track if we've parsed URL params
+  const hasCheckedUrlParamsRef = useRef(false);
 
   // Load image helper
   const loadImage = useCallback((src: string): Promise<HTMLImageElement> => {
@@ -319,6 +344,22 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
       ctx.drawImage(sprite, sx, sy, thumbnailSize.width, thumbnailSize.height, x, 0, displayWidth, displayHeight);
     }
 
+    // Draw time range highlight if set
+    if (timeRange?.end !== null && timeRange?.end !== undefined) {
+      const startX = (timeRange.start / duration) * rect.width;
+      const endX = (timeRange.end / duration) * rect.width;
+
+      // Dim areas outside the range
+      ctx.fillStyle = "rgba(0, 0, 0, 0.6)";
+      ctx.fillRect(0, 0, startX, rect.height);
+      ctx.fillRect(endX, 0, rect.width - endX, rect.height);
+
+      // Draw start/end edge markers only (no top/bottom border)
+      ctx.fillStyle = "rgba(212, 168, 83, 1)";
+      ctx.fillRect(startX - 1, 0, 3, rect.height);
+      ctx.fillRect(endX - 1, 0, 3, rect.height);
+    }
+
     // Draw speech/silence indicator
     const segments = metadata.speechSegments;
     if (segments && segments.length) {
@@ -335,7 +376,7 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
         ctx.fillRect(x1, y, Math.max(2, x2 - x1), barHeight);
       }
     }
-  }, [metadata]);
+  }, [metadata, timeRange]);
 
   // Update playhead position
   const updatePlayhead = useCallback(() => {
@@ -538,6 +579,37 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
     }
   }, [metadata, computePlayableRegions]);
 
+  // Parse URL time params and seek to start time
+  useEffect(() => {
+    if (isLoading || !metadata) return;
+
+    // Only parse once
+    if (hasCheckedUrlParamsRef.current) return;
+    hasCheckedUrlParamsRef.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    const startParam = params.get("t");
+    const endParam = params.get("e");
+
+    if (!startParam) return;
+
+    const startTime = parseCompactTime(startParam);
+    if (startTime === null || startTime < 0 || startTime > metadata.duration) return;
+
+    let endTime: number | null = null;
+    if (endParam) {
+      const parsedEnd = parseCompactTime(endParam);
+      if (parsedEnd !== null && parsedEnd > startTime && parsedEnd <= metadata.duration) {
+        endTime = parsedEnd;
+      }
+    }
+
+    setTimeRange({ start: startTime, end: endTime });
+
+    // Seek to start time (use seekToTime for URL params - no offset)
+    seekToTime(startTime);
+  }, [isLoading, metadata, seekToTime]);
+
   // Setup canvases when metadata loads - only run once
   useEffect(() => {
     if (!metadata || isLoading) return;
@@ -593,6 +665,13 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
     updatePlayhead();
   }, [updatePlayhead, currentFrame]);
 
+  // Re-render filmstrip when time range changes
+  useEffect(() => {
+    if (timeRange !== null) {
+      renderFilmstrip();
+    }
+  }, [timeRange, renderFilmstrip]);
+
   // Playback sync
   useEffect(() => {
     if (!isPlaying) return;
@@ -606,10 +685,21 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
       currentFrameRef.current = newFrame;
       setCurrentFrame(newFrame);
 
+      // Stop at end time if time range is set
+      if (timeRange?.end !== null && timeRange?.end !== undefined && video.currentTime >= timeRange.end) {
+        pause();
+        return;
+      }
+
       // Skip silence
       if (skipSilence && !isInPlayableRegion(video.currentTime)) {
         const nextTime = getNextPlayableTime(video.currentTime);
         if (nextTime !== null) {
+          // Don't skip past the end time
+          if (timeRange?.end !== null && timeRange?.end !== undefined && nextTime > timeRange.end) {
+            pause();
+            return;
+          }
           video.currentTime = nextTime;
         } else {
           pause();
@@ -632,7 +722,7 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
       const interval = setInterval(syncUI, 100);
       return () => clearInterval(interval);
     }
-  }, [isPlaying, getFrameIndexForTime, skipSilence, isInPlayableRegion, getNextPlayableTime, pause]);
+  }, [isPlaying, getFrameIndexForTime, skipSilence, isInPlayableRegion, getNextPlayableTime, pause, timeRange]);
 
   // Speed control
   useEffect(() => {
@@ -679,12 +769,17 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
         setShowVideo(false);
       }
 
+      // Clear time range when user starts scrubbing (gives them full control)
+      if (timeRange !== null) {
+        setTimeRange(null);
+      }
+
       // Notify tutorial that scrubbing started
       callbacks?.onScrub?.();
 
       handleScrub(e);
     },
-    [isPlaying, showVideo, callbacks]
+    [isPlaying, showVideo, callbacks, timeRange]
   );
 
   const handleScrub = useCallback(
@@ -811,10 +906,12 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
     metadata,
     duration: metadata?.duration || 0,
     showVideo,
+    timeRange,
 
     // Setters
     setSkipSilence,
     setSpeed,
+    setTimeRange,
 
     // Actions
     play,
