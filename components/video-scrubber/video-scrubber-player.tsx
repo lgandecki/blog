@@ -393,7 +393,7 @@ export function VideoScrubberPlayer({
                       themeStyles.playlistItem,
                       item.current && themeStyles.playlistItemCurrent
                     )}
-                    onClick={() => console.log("Play:", item.id)}
+                    onClick={() => {}}
                   >
                     {item.thumbnail ? (
                       <img
@@ -510,17 +510,11 @@ export function VideoScrubberPlayer({
           onMouseDown={scrubber.startScrubbing}
         >
           <canvas
-            ref={(el) => {
-              scrubber.filmstripCanvasRef.current = el;
-              scrubber.timelineCanvasRef.current = el;
-            }}
+            ref={scrubber.filmstripCanvasRef}
             className={cn(styles.filmstripCanvas, themeStyles.filmstripCanvas)}
           />
           <div
-            ref={(el) => {
-              scrubber.filmstripPlayheadRef.current = el;
-              scrubber.playheadRef.current = el;
-            }}
+            ref={scrubber.filmstripPlayheadRef}
             className={cn(styles.filmstripPlayhead, themeStyles.filmstripPlayhead)}
           />
         </div>

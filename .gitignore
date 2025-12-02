@@ -38,3 +38,5 @@ next-env.d.ts
 public/video-assets-old/
 video-scrubber
 .wrangler
+
+.claude/settings.local.json
