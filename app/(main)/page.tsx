@@ -9,7 +9,7 @@ import { YouTubePlayer } from "@/components/youtube-player";
 import { formatDate, getBlogPosts } from "./blog/utils";
 
 export const metadata: Metadata = {
-  title: "AI Engineer",
+  title: "Łukasz Gandecki - AI Engineer",
   description:
     "Projects and writing from Łukasz Gandecki, an AI engineer focused on knowledge experiences, developer tooling, and scalable systems.",
 };

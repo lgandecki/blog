@@ -1,0 +1,350 @@
+/* Tutorial Overlay */
+.overlay {
+  position: absolute;
+  bottom: 160px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+
+  /* Fade in animation */
+  animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.overlay.fadeOut {
+  animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+}
+
+.card {
+  background: linear-gradient(
+    145deg,
+    rgba(40, 40, 50, 0.95),
+    rgba(25, 25, 35, 0.98)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px 32px 20px;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 1px 0 rgba(255, 255, 255, 0.1) inset;
+  min-width: 720px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.icon {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #d4a853 0%, #b8912e 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(212, 168, 83, 0.4);
+  flex-shrink: 0;
+  color: #0a0a0a;
+}
+
+.headerText {
+  flex: 1;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 2px;
+  background: linear-gradient(to right, #fff, rgba(255, 255, 255, 0.8));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+  margin: 0;
+}
+
+.items {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  text-align: center;
+}
+
+.item.completed {
+  background: rgba(212, 168, 83, 0.08);
+  border-color: rgba(212, 168, 83, 0.2);
+}
+
+.item.completed .label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.checkbox {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.item.completed .checkbox {
+  background: linear-gradient(135deg, #d4a853 0%, #b8912e 100%);
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(212, 168, 83, 0.4);
+  transform: scale(1.05);
+}
+
+.checkIcon {
+  color: #0a0a0a;
+  opacity: 0;
+  transform: scale(0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.item.completed .checkIcon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.keys {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.keys kbd {
+  background: linear-gradient(180deg, #3a3a4a 0%, #2a2a3a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom-width: 3px;
+  border-bottom-color: rgba(0, 0, 0, 0.3);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+  transition: all 0.2s ease;
+}
+
+.keyHold {
+  background: linear-gradient(180deg, #4a4a5a 0%, #3a3a4a 100%) !important;
+  padding: 6px 14px !important;
+}
+
+.item.completed .keys kbd {
+  opacity: 0.6;
+}
+
+.label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 400;
+  transition: color 0.3s ease;
+  line-height: 1.4;
+}
+
+.progress {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.progressBar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #d4a853 0%, #e8bc5f 100%);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 12px rgba(212, 168, 83, 0.5);
+}
+
+.progressText {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Celebration animation when all complete */
+@keyframes celebrate {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.card.allComplete {
+  animation: celebrate 0.4s ease;
+}
+
+.card.allComplete .title {
+  background: linear-gradient(to right, #e8bc5f, #d4a853);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.card.allComplete .progressText {
+  color: #d4a853;
+  font-weight: 500;
+}
+
+/* Responsive - smaller screens */
+@media (max-width: 800px) {
+  .card {
+    min-width: auto;
+    width: calc(100vw - 32px);
+    max-width: 720px;
+    padding: 20px 24px 16px;
+  }
+
+  .items {
+    flex-direction: column;
+  }
+
+  .item {
+    flex-direction: row;
+    text-align: left;
+    padding: 12px 16px;
+  }
+
+  .content {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .overlay {
+    bottom: 140px;
+  }
+
+  .card {
+    padding: 16px 20px 14px;
+  }
+
+  .header {
+    margin-bottom: 16px;
+    gap: 12px;
+  }
+
+  .icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .title {
+    font-size: 16px;
+  }
+
+  .subtitle {
+    font-size: 12px;
+  }
+
+  .item {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .checkbox {
+    width: 24px;
+    height: 24px;
+  }
+
+  .keys kbd {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .label {
+    font-size: 12px;
+  }
+
+  .progress {
+    margin-top: 12px;
+    padding-top: 12px;
+    gap: 12px;
+  }
+
+  .progressText {
+    font-size: 11px;
+  }
+}
