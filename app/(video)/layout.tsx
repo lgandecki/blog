@@ -3,7 +3,7 @@ import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const cx = (...classes: (string | undefined)[]) => classes.filter(Boolean).join(" ");
+import { cn } from "@/lib/utils";
 
 export default function VideoRootLayout({ children }: { children: React.ReactNode }) {
   return (
