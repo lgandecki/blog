@@ -423,6 +423,21 @@
   color: var(--noir-text-muted);
 }
 
+/* Share button */
+.shareButton {
+  background: var(--noir-elevated);
+  color: var(--noir-text-muted);
+  border-radius: 6px;
+  border: 1px solid var(--noir-border);
+  transition: all 0.2s ease;
+}
+
+.shareButton:hover {
+  color: var(--noir-accent);
+  border-color: var(--noir-accent);
+  box-shadow: 0 0 12px var(--noir-accent-glow);
+}
+
 /* Sidebar toggle */
 .sidebarToggle {
   background: var(--noir-elevated);
