@@ -1,7 +1,3 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
 import { VideoScrubberPlayer, Activity } from '@/components/video-scrubber'
 import type { VideoScrubberConfig } from '@/components/video-scrubber'
 
@@ -16,39 +12,30 @@ function buildConfig(videoId: string): VideoScrubberConfig {
   }
 }
 
-export default function VideoPlayerPage() {
-  const params = useParams()
-  const videoId = params.videoId as string
-
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function loadActivities() {
-      try {
-        const res = await fetch(`${R2_BASE_URL}/${videoId}-activities.json`)
-        if (res.ok) {
-          const data = await res.json()
-          setActivities(data)
-        }
-      } catch (e) {
-        console.warn('Could not load activities:', e)
-      } finally {
-        setLoading(false)
-      }
+async function getActivities(videoId: string): Promise<Activity[]> {
+  try {
+    const res = await fetch(`${R2_BASE_URL}/${videoId}-activities.json`, {
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    })
+    if (res.ok) {
+      return res.json()
     }
-    loadActivities()
-  }, [videoId])
-
-  const config = buildConfig(videoId)
-
-  if (loading) {
-    return (
-      <div className="h-full w-full flex items-center justify-center bg-[#0a0a0a] text-white">
-        Loading...
-      </div>
-    )
+  } catch (e) {
+    console.warn('Could not load activities:', e)
   }
+  return []
+}
+
+export default async function VideoPlayerPage({
+  params,
+}: {
+  params: Promise<{ videoId: string }>
+}) {
+  const { videoId } = await params
+  const [config, activities] = await Promise.all([
+    Promise.resolve(buildConfig(videoId)),
+    getActivities(videoId),
+  ])
 
   return (
     <VideoScrubberPlayer
