@@ -219,7 +219,7 @@ export function useVideoScrubber(config: VideoScrubberConfig, callbacks?: VideoS
   // Compute playable regions
   const computePlayableRegions = useCallback(() => {
     if (!metadata) return
-    const BUFFER = 5
+    const SPEECH_SEGMENT_BUFFER_SECONDS = 5
     const segments = metadata.speechSegments || []
 
     if (!segments.length) {
