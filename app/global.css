@@ -326,6 +326,16 @@ table {
   filter: grayscale(100%) invert(100%);
 }
 
+/* Wayfair logo needs grayscale to preserve internal contrast (darker center, lighter edges) */
+.company-logo-wayfair {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.dark .company-logo-wayfair {
+  filter: grayscale(100%) invert(100%);
+}
+
 /* Project Carousel */
 .project-carousel {
   display: flex;
