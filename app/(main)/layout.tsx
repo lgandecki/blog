@@ -11,6 +11,9 @@ import { ThemeProvider } from "@/components/theme-provider";
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
+  icons: {
+    icon: "/assets/favicon.svg",
+  },
   title: {
     default: "Łukasz Gandecki",
     template: "%s | Łukasz Gandecki",

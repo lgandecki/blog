@@ -1,9 +1,17 @@
 import "../global.css";
+import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/assets/favicon.svg",
+  },
+};
+
 export default function VideoRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
