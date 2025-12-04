@@ -54,34 +54,34 @@ export default async function Page() {
             <br />
             Specialized in full-stack architecture, Artificial Intelligence, developer tooling.
           </p>
-          <div className="mt-8 mb-0 flex flex-wrap items-center gap-6 opacity-60">
+          <div className="mt-8 mb-0 flex flex-wrap items-center gap-4 opacity-60 md:gap-6">
             <Image
               src="/assets/2K Games Logo.svg"
               alt="2K Games"
               width={60}
               height={40}
-              className="h-8 w-auto grayscale dark:invert"
+              className="company-logo-2k h-8 w-auto md:h-9"
             />
             <Image
               src="/assets/Audi Logo 2016.svg"
               alt="Audi"
               width={80}
               height={28}
-              className="h-7 w-auto grayscale dark:invert"
+              className="company-logo h-7 w-auto md:h-8"
             />
             <Image
               src="/assets/Wayfair Logo.svg"
               alt="Wayfair"
               width={100}
               height={24}
-              className="h-6 w-auto grayscale dark:invert"
+              className="company-logo h-6 w-auto md:h-7"
             />
             <Image
               src="/assets/Alef.png.webp"
               alt="Alef Education"
               width={80}
               height={32}
-              className="h-8 w-auto grayscale dark:invert"
+              className="company-logo relative md:-top-[6px] -top-[4px] h-7 w-auto md:h-9"
             />
           </div>
         </div>

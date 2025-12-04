@@ -306,6 +306,26 @@ table {
   filter: invert(1);
 }
 
+/* Company Logos */
+.company-logo {
+  filter: brightness(0);
+  transition: filter 0.3s ease;
+}
+
+.dark .company-logo {
+  filter: brightness(0) invert(1);
+}
+
+/* 2K logo needs grayscale instead of brightness(0) to preserve internal contrast */
+.company-logo-2k {
+  filter: grayscale(100%);
+  transition: filter 0.3s ease;
+}
+
+.dark .company-logo-2k {
+  filter: grayscale(100%) invert(100%);
+}
+
 /* Project Carousel */
 .project-carousel {
   display: flex;
