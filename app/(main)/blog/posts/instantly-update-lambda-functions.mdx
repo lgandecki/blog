@@ -1,0 +1,74 @@
+---
+title: "Instantly update your Lambda functions (development)"
+publishedAt: "2020-11-27"
+summary: "Deploying the whole stack whenever you want to check your changes is tiresome and boring."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9848c2140e7fdefacac5_joey-kyber-45FJgZMXCK8-unsplash.webp"
+---
+
+### Why?
+
+Deploying the whole stack whenever you want to check your changes is tiresome and boring.
+If you do it by pushing to the CI system - it's even slower.
+If you do it locally, it's still slow. And if your build relies on multiple secrets (like most do), you can't even do it properly from your local dev.
+Changing files in-line through the lambda panel is painful - you can't paste TypeScript code because that will result in Syntax Errors. You also risk forgetting about some changes in the code, and later losing them after the next push, or - even worse - QAing and approving the functionality and merging to master, even though the code in the repository does not have the required fix. It's a mess :)
+
+Watch me below use this functionality to get a feel of what this is all about.
+
+[Watch on YouTube](https://www.youtube.com/watch?v=PKgHCzaVOY8)
+
+[The source code for playing along is here](https://github.com/xolvio/cdk-typescript-tooling-example-live?ref=xolvio.ghost.io)
+
+### What?
+
+Using the TypeScriptFunction from our tool gives you the ability to use the `update-typescript-function` command.
+
+#### Updating all functions:
+
+Assuming your stack is declared at `./src/cdk.ts` Run it like this:
+
+```typescript
+npx update-typescript-function ./src/cdk.ts
+```
+
+And it will quickly and automatically update all TypeScript Lambda functions found in your CDK Stack.
+
+#### Configuration:
+
+Actually, you might need to do a few exports first... ;-)
+
+```typescript
+export AWS_SECRET_ACCESS_KEY=SECRET_ACCESS_KEYexport AWS_ACCESS_KEY_ID=ACCESS_KEYexport AWS_REGION=us-east-2
+```
+
+In the future, we do want to read those from ~/.aws/credentials, but for now please export the values.
+
+We need your cdk file to export a stack, in most cases, you will do something like this:
+
+### 
+
+```typescript
+import * as cdk from "@aws-cdk/core";
+import { SalesSystem } from "./SalesSystem";
+
+const baseStackName = "SalesSystemExample";
+export default new SalesSystem(new cdk.App(), baseStackName);
+```
+
+### 
+
+We like to deploy a stack per branch, so all our branches have different StackNames and also differently named (suffixed) resources. Because of that, we rely on the branch name to cache your stack information. Worst case scenario you will have cache built multiple times with the same data.
+
+#### Updating single function:
+
+The compilation and uploading of functions happen in parallel. Because of that it is crazy fast (<10 s for ~20 functions) and in most cases that is what you should be doing. It comes with the advantage that if you change a code that's used by a few different functions, all of them will be redeployed. Sometimes you might not realize that some piece of code is used in multiple places and get yourself in some weird inconsistent state.
+But if you must, or if you have hundreds of functions in the stack, it's simple, get the Logical ID of a function (using aws cli or going to the stack using their cloudformation panel), and do:
+
+```typescript
+npx update-typescript-function ./src/cdk.ts PurchaseEndpointIKYULFRNR9VJ
+```
+
+Library available here: [https://www.npmjs.com/package/cdk-typescript-tooling](https://www.npmjs.com/package/cdk-typescript-tooling?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

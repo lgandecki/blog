@@ -1,0 +1,78 @@
+---
+title: "How to fix the annoying \"Ensure there is only one instance of graphql\" error"
+publishedAt: "2021-02-12"
+summary: "If you have been doing serious work with GraphQL over the last few years, you surely saw this error at one time or another"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9be0d3821a0a47fd4eaa_sarah-kilian-52jRtc2S_VE-unsplash.webp"
+---
+
+If you have been doing serious work with GraphQL over the last few years, you surely saw this error at one time or another:
+
+```typescript
+Error: Cannot use GraphQLSchema "[object Object]" from another module or realm.
+Ensure that there is only one instance of "graphql" in the node_modules directory.
+```
+
+I personally tend to hit it in the worst possible times - think "Friday Night Hot Fix" situation. :-)
+In this post I want to list some of the ways that I use to fix this problem.
+
+### Yarn:
+
+First, take a look at the output of:
+`yarn why GraphQL`
+
+If you have different versions of GraphQL in the dependency tree try to make some updating/downgrading to make things match. This is the way to go if for example you realize you have one of your dependency very old - updating that might fix the problem.
+
+If you can't get things to match exactly and you use fairly up-to-date dependencies add resolutions section to your package.json, like so:
+
+```typescript
+"resolutions": {
+ "graphql": "15.5.0"
+}
+```
+
+‍`‍`
+
+`‍`
+
+Remove yarn.lock, reinstall dependencies.
+
+### Npm:
+
+Start with
+
+`npm dedupe`
+
+which should flatten the dependencies and if you have the same version of GraphQL dependency but in many places, this will take care of that.
+
+If that does not help most probably you have different versions of GraphQL that can't be flattened.
+
+`npm ls graphql`
+
+can show you where are all the different dependencies coming from, try to do some updating/downgrading to make things match.
+
+If that's not possible you can use npm-force-resolutions npm package to force the dependencies to use the same version of GraphQL.
+Add
+
+```typescript
+"resolutions": {
+  "graphql": "15.5.0"
+}
+```
+
+`‍`
+
+to your package.json, and add a preinstall script:
+
+```typescript
+scripts": {
+  "preinstall":  "npx npm-force-resolutions"
+}
+```
+
+Note: if you use npm 7 that won't work and your last bet is following instruction from this stackoverflow answer:
+
+[https://stackoverflow.com/a/65014694/2177802](https://stackoverflow.com/a/65014694/2177802?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

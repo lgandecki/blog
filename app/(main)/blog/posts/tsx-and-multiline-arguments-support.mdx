@@ -1,0 +1,48 @@
+---
+title: "cypress-cucumber-preprocessor 4.1.0 - TSX and Multiline Step Arguments support"
+publishedAt: "2021-04-22"
+summary: "We've just released a new version of the cypress-cucumber-preprocessor package."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff912175cfe61efb1f4962_charles-deluvio-cMvDruWjv0Y-unsplash.webp"
+---
+
+### Multiline Step Arguments:
+
+Thanks to @Enrico126 it allows usage of multiline step arguments, as showcased with a simple .feature example:
+
+```typescript
+Scenario Outline: DocString
+    When I use DocString with argument like this:
+      """
+      Hey,
+      You have been granted <Role> rights.
+      -The Admins
+      """
+    Then I should have a string with argument "<Role>"
+
+   Examples:
+    |  Role     |
+    |  Manager  |
+    |  Admin    |
+```
+
+and matching step definition:
+
+```typescript
+let argString = "";
+
+When("I use DocString with argument like this:", (dataString) => {
+  argString = dataString;
+});
+
+Then(/^I should have a string with argument "([^"]*)"$/, function (argument) {
+  expect(argString).to.contain(argument);
+});
+```
+
+TSX support:
+
+Thanks to @mallison you should be able to use .tsx files as your step definitions. As noted by @azamuddin this change also allows the use of @cypress/react to test react components in isolation with cucumber.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+We've just released a new version of the cypress-cucumber-preprocessor package.

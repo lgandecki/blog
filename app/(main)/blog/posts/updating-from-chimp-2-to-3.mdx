@@ -1,0 +1,112 @@
+---
+title: "Updating from Chimp 2 to 3"
+publishedAt: "2021-01-31"
+summary: "We've rewritten Chimp to use TypeScript and the fantastic CLI Framework called Oclif."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff8e275370f19dc00530e1_markus-winkler-cxoR55-bels-unsplash.webp"
+---
+
+We've rewritten Chimp to use TypeScript and the fantastic CLI Framework called Oclif.
+Those changes should allow us to iterate quickly while keeping the quality high.
+While at it we've fixed some pesky bugs, decided to change some defaults, and clean up the CLI API.
+
+This means you won't be able to just change the version of chimp and continue using it, but we will guide you through the update - it's very small, so you hope you do it as soon as possible, to ensure you keep getting the updates from us. :-)
+
+For the demonstration, we will be using [https://github.com/xolvio/chimp-gql-tiny-example](https://github.com/xolvio/chimp-gql-tiny-example?ref=xolvio.ghost.io).
+
+You can watch me do the update here:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=s6Q81Hv6Evk)
+
+Or continue with the article.
+
+The first thing we have to do is to update the chimp version, let's edit the package.json and bump chimp:
+
+```typescript
+"chimp": "2.7.0",
+// ->
+	"chimp": "3.2.1",
+```
+
+`‍`The next thing is removing the graphql-import - the package has been deprecated, forces usage of old graphql version that's sometimes causing issues, and we've decided to get rid of it.
+
+```typescript
+"graphql-import": "1.0.2",
+```
+
+Now for the scripts cleanup
+Previously we've established this pattern where we would create a bunch of npm scripts that would get called one after another. We thought it made it more clear what's going on but after reconsideration, it's messy and provides little value to a developer.
+
+Remove all those scripts:
+
+```typescript
+"scripts": {
+	"graphql:codegen": "chimp gql:generate",  
+	"graphql:generateAll": "npm run graphql:codegen && npm run 			graphql:generateSchema && npm run graphql:typegen && npm run prettify:all",  
+	"graphql:generateSchema": "ts-node -r tsconfig-paths/register ./generated/graphql/printSchema.ts > ./schema.graphql",  
+	"graphql:typegen": "graphql-codegen --config codegen.js && node ./fix-generated",  
+	"postinstall": "npm run graphql:generateAll",  
+	"prettify:all": "npx prettier --write \"src/**/*.ts\" \"generated/**/*.ts\" --loglevel error"
+}
+```
+
+`‍`
+
+And just put these two in:
+
+```typescript
+"chimp": "chimp generate",  
+"postinstall": "yarn chimp",
+```
+
+Much cleaner, isn't it?
+
+The whole scripts section in our case looks like this now:
+
+```typescript
+"scripts": {  
+  "chimp": "chimp generate",  
+  "postinstall": "yarn chimp",  
+  "test": "jest",  
+  "start": "ts-node -r tsconfig-paths/register ./src/index.ts"  
+},
+```
+
+Let's run yarn to install the new dependencies. It will also run the postinstall script  which will regenerate the graphql-related code and types.
+
+You should note the new and shiny CLI output from chimp :-)
+
+```typescript
+✔ Generating code
+✔ Generating types
+✔ Tweak the generated types
+✔ Prettify the generated code
+```
+
+If you try to run the app now, you will get an error.
+The reason is that we've changed the defaults for the app aliases.
+We've realized that the community prefers using ~ for aliases instead of @ - and it makes sense. @ might be a package, but ~ says loud and clear that it is an alias. We wish we didn't have to change the defaults, but since the change is easy we hope it will be worth it in the long run.
+
+There are two options, change the chimp script to point to the existing aliases:
+
+```typescript
+"chimp": "chimp generate -a @app -g @generated",
+```
+
+rerun chimp and run the app now, it should work :)
+
+The other option, which we recommend if you are able to do so, is to do an easy find and replace
+@app/ -> ~app/
+and
+@generated -> ~generated
+
+Make sure you are making changes in json files as well as it has to update the tsconfig.json.
+
+Try to run the app now - it should work.
+
+That's it, just a few tiny changes from you, but a whole new chimp ready for action :-)
+
+Thanks!
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

@@ -1,0 +1,142 @@
+---
+title: "Creating Tables with DynamoDB Toolbox"
+publishedAt: "2020-12-29"
+summary: "I'm playing around with DynamoDB Toolbox, and one thing that wasn't clear in my mind was how do I actually create a table using the definitions I made using Toolbox."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa23375cfe61efb302502_mitchell-hollander-Yx-lrVk1ZHY-unsplash.webp"
+---
+
+I'm playing around with DynamoDB Toolbox, and one thing that wasn't clear in my mind was how do I actually create a table using the definitions I made using Toolbox.
+
+Quick GitHub issues search lead me to [this issue](https://github.com/jeremydaly/dynamodb-toolbox/issues/101?ref=xolvio.ghost.io) 
+
+```
+
+```
+
+where Simlu was asking the same question, and the answer was "Do It Yourself".
+
+I dread code duplication especially around things like table definitions - it's trivial to have all your tests pass, but in the end, the app fails in production because you have a mismatch between two definitions of the same thing.
+
+I've made a little example repo and a helper. For now, feel free to just copy and paste it.
+
+*A helper like this might get into the dynamodb-toolbox itself, so I didn't create a package for it yet. But if jeremydaly decides this code should live in a package, I will do that.*
+
+```typescript
+import type { DynamoDB } from "aws-sdk";
+
+type DynamoDBTypes = "string" | "number" | "binary";
+
+type ToolboxData = {
+  partitionKey: string;
+  sortKey?: string;
+  attributes: {
+    [key: string]: DynamoDBTypes;
+  };
+  name: string;
+};
+
+function getAttributes(tableDefinition: DynamoDB.CreateTableInput) {
+  const typesMap: { [key: string]: DynamoDBTypes } = {
+    S: "string",
+    N: "number",
+    B: "binary",
+  };
+
+  return tableDefinition.AttributeDefinitions.reduce((previous, current) => {
+    return {
+      ...previous,
+      [current.AttributeName]: typesMap[current.AttributeType],
+    };
+  }, {});
+}
+
+function getPartitionKey(tableDefinition: DynamoDB.CreateTableInput) {
+  return tableDefinition.KeySchema.find((k) => {
+    return k.KeyType.toUpperCase() === "HASH";
+  }).AttributeName;
+}
+
+function getSortKey(tableDefinition: DynamoDB.CreateTableInput) {
+  const rangeAttribute = tableDefinition.KeySchema.find((k) => {
+    return k.KeyType.toUpperCase() === "RANGE";
+  });
+  return rangeAttribute ? rangeAttribute.AttributeName : undefined;
+}
+
+export const dynamoSdkToToolbox = (
+  tableDefinition: DynamoDB.CreateTableInput
+): ToolboxData => ({
+  partitionKey: getPartitionKey(tableDefinition),
+  attributes: getAttributes(tableDefinition),
+  sortKey: getSortKey(tableDefinition),
+  name: tableDefinition.TableName,
+});
+```
+
+(there are tests for it in [the example repo](https://github.com/xolvio/dynamodb-toolbox-examples/blob/master/src/helpers/data-table-definition-to-toolbox.spec.ts?ref=xolvio.ghost.io))
+
+```
+
+```
+
+This is how to use it. Assuming you have a table definition using AWS SDK format:
+
+```typescript
+import type { DynamoDB } from "aws-sdk";
+
+export const tableDefinition: DynamoDB.CreateTableInput = {
+  TableName: "my-table",
+  AttributeDefinitions: [
+    {
+      AttributeType: "S",
+      AttributeName: "pk",
+    },
+    {
+      AttributeType: "S",
+      AttributeName: "sk",
+    },
+  ],
+  KeySchema: [
+    {
+      AttributeName: "pk",
+      KeyType: "HASH",
+    },
+    {
+      AttributeName: "sk",
+      KeyType: "RANGE",
+    },
+  ],
+  BillingMode: "PAY_PER_REQUEST"
+};
+```
+
+**src/tableDefinition.ts**
+
+pass it to the dynamoSdkToToolbox helper:
+
+```typescript
+const DocumentClient = new DynamoDB.DocumentClient()
+
+const MyTable = new Table({
+  ...dynamoSdkToToolbox(tableDefinition),
+  DocumentClient
+})
+```
+
+**src/Customer.ts**
+
+This will set things like attributes, partitionKey, sortKey, and name for you - making sure they are and stay in sync.
+
+Using the same table definition you can create a table (although you would probably use cloud formation or CDK for that, that's a topic for a separate article, but you might want to use a helper like this to transform the SDK definition to CDK [https://gist.github.com/lgandecki/e7806462ce7c3d0d47ce65d44c5aa43d](https://gist.github.com/lgandecki/e7806462ce7c3d0d47ce65d44c5aa43d?ref=xolvio.ghost.io) )
+
+```typescript
+await dynamoDB.createTable(tableDefinition).promise()
+```
+
+**src/index.ts**
+
+Feel free to play around [with the code.](https://github.com/xolvio/dynamodb-toolbox-examples?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

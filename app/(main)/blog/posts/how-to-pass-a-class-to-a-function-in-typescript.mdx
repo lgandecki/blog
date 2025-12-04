@@ -1,0 +1,102 @@
+---
+title: "How to pass a class to a function in TypeScript"
+publishedAt: "2021-01-08"
+summary: "An example of passing a class to a function in TypeScript"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9a005dfd34c5dcbb6aa9_the-climate-reality-project-Hb6uWq0i4MI-unsplash.webp"
+---
+
+You can watch me go through this exercise here:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=chR6GemekuY)
+
+TypeScript documentation generously helps us with an example:
+
+```typescript
+class BeeKeeper {
+  hasMask: boolean;
+}
+
+class ZooKeeper {
+  nametag: string;
+}
+
+class Animal {
+  numLegs: number;
+}
+
+class Bee extends Animal {
+  keeper: BeeKeeper;
+}
+
+class Lion extends Animal {
+  keeper: ZooKeeper;
+}
+
+function createInstance<A extends Animal>(c: new () => A): A {
+  return new c();
+}
+
+createInstance(Lion).keeper.nametag;
+createInstance(Bee).keeper.hasMask;
+```
+
+Fantastic! Looks easy enough... to copy and paste...
+You (and also, me in the past, at least a few times), all excited, copy the createInstance function and start changing it to your liking, just to find out... it does not work!
+
+```typescript
+abstract class User {  
+  constructor(public id: string) {}  
+}   
+class Admin extends User {  
+  doAdminThing() {}  
+}  
+  
+class PaidMember extends User {  
+  doPaidMemberThing() {}  
+}  
+  
+function createInstance<A extends User>(c: new () => A): A {  
+  return new c();  
+}  
+  
+createInstance(Admin)
+// ^ Error: Argument type Admin is not assignable to parameter type {new(): User}
+```
+
+Not only TypeScript complains, but the error is a not-so-helpful dead-end. Good luck googling "is not assignable to parameter type".:)
+
+It turns out the fix is easy once you figure it out, but it's definitely not trivial. The simplified example from the TypeScript documentation had classes without constructors... because that's the most common case for how people use classes...? :) Anyway...
+The trick is to tell TypeScript that it is indeed fine for a class to have a constructor, that also takes arguments, imagine that!
+To do that change the `new () => A` to `new (...args) => A`, here how the new `createInstance` function looks like:
+
+```typescript
+function createInstance<A extends User>(c: new (...args) => A): A {  
+  return new c();  
+}
+createInstance(Admin).doAdminThing() // TypeScript Happy!
+createInstance(PaidMember).doPaidMemberThing() // TypeScript Happy!   
+createInstance(PaidMember).doAdminThing() // TypeScript Sad.. But rightly so this time!
+```
+
+So that is great. Remember the original example? Turns out we can change the `createInstance` function argument type the same way, adding the ...args, and even their example still works (since ...args is fine with 0 arguments).
+
+```typescript
+// ...
+  
+function createInstance<A extends Animal>(c: new (...args) => A): A {  
+  return new c();  
+}  
+  
+createInstance(Lion).keeper.nametag;  
+createInstance(Bee).keeper.hasMask;
+```
+
+`‍`
+
+I can only wonder how many tortured souls went through this problem without a clue, and finally gave up.
+
+Good luck there, TypeScripters :)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

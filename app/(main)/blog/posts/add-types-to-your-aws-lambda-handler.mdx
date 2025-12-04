@@ -1,0 +1,51 @@
+---
+title: "Add types to your AWS lambda handler"
+publishedAt: "2021-07-28"
+summary: "Lambdas handlers can be invoked with many different, but always complex, event arguments."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66fffd47b2744afc0e21a99d_martin-woortman-KFF42HA6Oug-unsplash.webp"
+---
+
+Lambdas handlers can be invoked with many different, but always complex, event arguments. Add to that the context, callback, matching return type and you basically start listing all the different ways that your function can fail in production.
+
+Watch me here to work through this example or keep reading:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=i2r5pLG5JG8)
+
+In the wild I see most people either NOT add types around their lambda handlers, and try to figure out what's available to them searching through the documentation, or add the types manually, the way they THINK they should be.
+
+Luckily there is much better way.
+
+Add `@types/aws-lambda` package as your devDependency.
+
+Then you can import types from that package and use it:
+
+```typescript
+import type { APIGatewayProxyHandlerV2 } from "aws-lambda";  
+  
+export const handler: APIGatewayProxyHandlerV2 = async (event, context, info) => {  
+  const {queryStringParameters} = event;
+}
+```
+
+If you have specific data you always return from the function you can specify it with generics: 
+
+```typescript
+type ReturnedData = {
+  sum: number
+}
+export const handler: APIGatewayProxyHandlerV2 = async (event, context, info) => {
+  const {queryStringParameters} = event;
+
+  return {
+    sum: parseInt(queryStringParameters.a) + parseInt(queryStringParameters.b)
+  }
+}
+```
+
+What's nice here is that now you can export that type and reuse it in a different place - perhaps you call this lambda function from a different lambda function, now you can have a typed integration.
+
+API Gateway might be the most common used lambda but there @types/aws-lambda package provides you with most (if not all) you could need, handlers for SQS, SNS, dynamodb streams, and so on.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

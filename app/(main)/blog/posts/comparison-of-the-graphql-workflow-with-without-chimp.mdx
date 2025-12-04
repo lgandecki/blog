@@ -1,0 +1,156 @@
+---
+title: "Comparison of the GraphQL Workflow with/without Chimp"
+publishedAt: "2020-09-27"
+summary: "Let's take a look at how using chimp can benefit your workflow when working on GraphQL Apollo Server."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa2bdb3248c92da764d3e_glenn-carstens-peters-6rkJD0Uxois-unsplash.webp"
+---
+
+Let's take a look at how using chimp can benefit your workflow when working on GraphQL Apollo Server.
+
+Read through or watch the video here:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=-pC2fb-5fes)
+With chimp
+First, we will take a look at adding a new module with a query with Chimp.
+
+We will be using [https://github.com/xolvio/chimp-gql-tiny-example](https://github.com/xolvio/chimp-gql-tiny-example?ref=xolvio.ghost.io) repo with the default branch of `data-sources-with-chimp`
+
+First let's create a new module with graphql file: ./src/Echo/Echo.graphql
+
+```typescript
+type EchoResponse {
+    text: String!
+    length: Int! @computed
+}
+
+extend type Query {
+    echo(text: String!): EchoResponse!
+}
+```
+
+Take note that we use the `@computed` directive to tell Chimp to generate a field-level resolver for that field.
+
+Now generate all the things (using chimp):
+
+```typescript
+npm run graphql:generateAll
+```
+
+You will see a few new files, in particular one with a resolver for the Query and one with the resolver for the EchoResponse.length field.
+
+Let's take a look at the Query first:
+
+```typescript
+import { QueryResolvers } from "@generated/graphql/types";
+
+export const echoQuery: QueryResolvers["echo"] = (parent, args, context) => {
+  throw new Error("not implemented yet");
+};
+```
+
+And replace throwing an error with returning the object with text:
+
+```typescript
+export const echoQuery: QueryResolvers["echo"] = (parent, args, context) => ({
+  text: args.text
+});
+```
+
+Now the field level resolver:
+
+```typescript
+import { EchoResponseResolvers } from "@generated/graphql/types";
+
+export const EchoResponseLength: EchoResponseResolvers["length"] = (
+  parent,
+  args,
+  context
+) => {
+  throw new Error("Not implemented yet");
+};
+```
+
+Let's replace the error with returning the length for the text that comes from the parent (in our case - the Echo Query)
+
+```typescript
+import { EchoResponseResolvers } from "@generated/graphql/types";
+
+export const EchoResponseLength: EchoResponseResolvers["length"] = (
+  parent,
+  args,
+  context
+) => parent.text.length;
+```
+
+And that's it! You can start the server (npm start) and check the query:
+
+![](https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa2b14d9b991ef03add2a_image-1.png)
+Without chimp
+Now for the non-chimp part!
+
+We will be using https://github.com/xolvio/chimp-gql-tiny-example repo with the  `data-sources` branch.
+
+Similarly to Chimp - let's create ./src/Echo/Echo.graphql
+
+```typescript
+type EchoResponse {
+  text: String!
+  length: Int!
+}
+
+extend type Query {
+  echo(text: String!): EchoResponse!
+}
+```
+
+`‍`
+
+Now we have to manually create the resolvers file and implement it. I usually copy and paste a small resolvers file from a different module and modify it to the shape I need.
+
+```typescript
+export const echoResolvers = {
+  Query: {
+    echo: (_, args) => {
+      return { text: args.text };
+    },
+  },
+  EchoResponse: {
+    length: (echo) => {
+      return echo.text.length;
+    },
+  },
+};
+```
+
+`‍`
+
+**src/Echo/echoResolvers.ts**
+
+Now we need to manually add it to the existing resolvers:
+
+```typescript
+// (..)
+import { echoResolvers } from "./Echo/echoResolvers";
+export const resolvers = merge(
+  {},
+  authorResolvers,
+  libraryResolvers,
+  echoResolvers
+);
+```
+
+`‍`
+
+You can start the app and run the query, it should work exactly the same way.
+
+So, what's the big deal? Both options seemed easy.
+
+The difference is in the fact that doing things manually is error-prone, there are literally tens of ways you could make this not work on the non-chimp part, from not adding the resolvers (or not adding them correctly), to not implementing the resolvers properly. I had a dry run for recording a video for this article, and then the final one. In both cases, I made an error in implementing the Echo Query resolver. Instead of returning `{text: args.text}` I just returned the `args.text` (as if the query should return a String, not EchoResponse - which is an object). The first time around I made that mistake in the non-chimp case and hit a runtime error when running the query. It took me a few minutes to figure out what's wrong. The second time around I made that mistake with the chimp watching my back - and the moment I made the error typescript shouted at me, that I'm returning a string instead of an object. In general - the sooner you get the feedback while coding, the less time it will take to fix a problem, and the more likely you are to stay in the flow (which is where happiness comes from ;-) )
+
+Obviously, you could have manually generated types based on your schema, and then manually attach them to your resolvers, but it's not really straightforward, people forget to do that, or do it incorrectly. It's also easy to get the shape of the resolvers correct, so you could have the types happy, but runtime again. You could also just forget to implement a field-level resolver - with the chimp, it's generated for you with a failing test, so it's tough to miss.
+
+And speaking of tests - we generate the scaffolds for your tests. Here we didn't implement them to make the comparison more apples to apples, but they make testing super easy, which is definitely not the case when working with a typical apollo server.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

@@ -1,0 +1,104 @@
+---
+title: "\"Works on my machine\" / how to reset your local git repository without cloning again."
+publishedAt: "2020-08-21"
+summary: "Remove all untracked/ignored files and directories excluding .idea and .vscode folders, list things to remove, and ask for confirmation first."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff98e53e1ce13089bd6ced_jose-antonio-gallego-vazquez-HQpzT47S7Vo-unsplash.webp"
+---
+
+Tldr: Remove all untracked/ignored files and directories excluding .idea and .vscode folders, list things to remove, and ask for confirmation first:
+
+```typescript
+git clean -x -d -n -e .idea -e .vscode | awk '{print $3}' | xargs -p rm -rf
+```
+
+### What?
+
+You know the nightmare - the tests are green locally, but they fail on CI/on your colleague machine/maybe even production.
+
+The first step to debug the issue for a lot of the developers I've worked with is to make sure they have a clean state (git status), then reinstall the dependencies (with JS projects - usually by removing the node_modules first). If that doesn't help they clone the repository so they can start from a completely clean slate.
+
+Sounds familiar?
+
+Behold - there is no need for that madness. Let's clean the existing repo in place, seeing all the potential culprits.
+
+**How?**
+
+Try:
+
+```typescript
+git clean -x -d -n
+```
+
+It should show something like:
+
+```typescript
+Would remove dist/
+Would remove node_modules/
+Would remove .idea/
+```
+
+*Note: -x considers ignored files as well, -d removes whole ignored/untracked directories*
+
+If you are fine with the list, remove the -n (dry run), add -f (force):
+
+```typescript
+git clean -x -d -f
+```
+
+Done!
+
+How about if you see something in the list you don't want to remove. In my case - I don't want to remove the .idea folder, it has no influence on the tests or my app runtime, and removing it while having the project open causes Webstorm to behave in a weird way.
+
+Use -e for that:
+
+```typescript
+git clean -x -d -n -e .idea
+```
+
+What's a bit annoying though now is that you have to keep switching between the two versions of the command (-n and -f). If you want a quick way of getting the work done it would be nice if the command just listed what it wants to remove, and then ask you for confirmation. That way you can add an alias or just copy and paste the command every time you need to use it, without changing anything. Let's use some Unix magic for that.
+
+We can pipe the result of the git clean command to awk to get the path to a file/directory that would get removed:
+
+```typescript
+git clean -x -d -n -e .idea -e node_modules | awk '{print $3}'
+```
+
+From there, we can pipe it to xargs to pass the paths as arguments to rm utility, we use -p xargs flag to have it ask for confirmation before deleting anything:
+
+```typescript
+git clean -x -d -n -e .idea | awk '{print $3}'  | xargs -p rm -rf
+```
+
+It should show something like:
+
+```typescript
+rm -rf dist/ hello node_modules/?...
+```
+
+Press "y" and enter to execute the echoed command.
+
+**Alias it**
+
+If you are like me and find yourself using this command frequently, it might be helpful to alias it:
+
+```typescript
+git config --global alias.reset-repo "! git clean -x -d -n -e .idea | awk '{print \$3}' | xargs -p rm -rf"
+```
+
+*Note the \ before $ sign. Also, if you don't use jetbrains IDE - either remove the -e .idea or change it to something that might be useful to you.*
+
+Now, whenever you need to do some serious cleaning run:
+
+```typescript
+git reset-repo
+```
+
+Please let us know if you find this helpful if you have a better way, or whatever comes to your mind after reading. :-)
+
+Thanks!
+
+Łukasz
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

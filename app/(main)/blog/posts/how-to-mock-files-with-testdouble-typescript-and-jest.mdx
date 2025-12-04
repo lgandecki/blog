@@ -1,0 +1,186 @@
+---
+title: "How to mock files with TestDouble, TypeScript and Jest"
+publishedAt: "2020-10-21"
+summary: "Let's assume a structure of two files, first a file with a function that calls a separate function and performs some logic based on the information received"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9b4e680f0e21d7b072a8_gemma-evans-nph59r9hkVg-unsplash.webp"
+---
+
+## Why we mock - background story (scroll down to see how and get code example)
+
+Let's assume a structure of two files, first a file with a function that calls a separate function and performs some logic based on the information received. In our case, we will be giving advice based on a fetched number of friends for a given person.`‍`
+
+```typescript
+import { fetchNumberOfFriendsFor } from "./slow-operation-to-mock";
+export const judgeMe = async (name: string) => {
+  const numberOfFriends = await fetchNumberOfFriendsFor(name);
+  if (numberOfFriends > 50) {
+    return "Nice job! You have plenty of friends!";
+  } else {
+    return "Get out and make some friends!";
+  }
+};
+```
+
+`‍`
+
+`‍`
+
+The function that fetches the data does not matter to us, it's been in our system forever, and all we need to know is its API - it takes a name (string) and returns a promise that resolves to a number of friends (Promise<number>). We don't really care whether it takes the data from an external service, a local database or if it is just good at guessing.
+
+But, currently, without learning the details of it, we can't test our function. So in our frustration we dive in and see this:
+
+```typescript
+export const fetchNumberOfFriendsFor = (name: string): Promise<number> =>
+  new Promise((resolve) =>
+    setTimeout(() => {
+      if (name === "Loner") {
+        resolve(2);
+      } else {
+        resolve(100);
+      }
+    }, 100)
+  );
+```
+
+## `‍`
+
+Ok, so the tests are easy:
+
+```typescript
+import { judgeMe } from "./module-under-test";
+
+test("happy scenario", async () => {
+  const result = await judgeMe("Loner");
+
+  expect(result).toEqual("Get out and make some friends!");
+});
+
+test("Not so happy scenario", async () => {
+  const result = await judgeMe("All the other names");
+
+  expect(result).toEqual("Nice job! You have plenty of friends!");
+});
+```
+
+With a few downsides, such as the fact that the test is slow, and that we had to learn about the internals of things we don't own...
+
+But still...
+
+We pack up, turn off our laptop and happily go to sleep, to be woken up by a colleague - the build is failing on CI and it's our test that's broken. How could it be?
+
+Turns out - the other team "improved" the algorithm for calculating the number of friends. And they give a loner 50 friends now. Their tests are passing, but yours are broken and you get a hat of shame to wear for introducing badly designed tests.
+
+What can we do?
+
+Change jobs, or, better - use testdouble. It will allow us to write an integration test for the piece that we are interested in.
+
+TestDouble has a beautiful syntax for defining the behavior. Let's say we want to make sure that when the fetchNumberOfFriendsFor function is called with a name we pass ("Name") to it, it returns  some number (5). We just do:
+
+```typescript
+clipboard
+```
+
+Then when someone calls
+
+```typescript
+fetchNumberOfFriendsFor("name")
+```
+
+it will resolve to 5.
+
+The idea is really that simple!
+
+And with TypeScript - testdouble will make sure that you are passing incorrect arguments, and returning/resolving values that the function itself would return (so you can't resolve to a string or object in our example, and you can't pass, for example, a number in).
+
+What is this function then, can you just pass anything to td.when() and it makes it a mock? Unfortunately, it's not quite as magical, but close.
+
+Testdouble documentation shows you a pattern that does this:
+
+```typescript
+const {fetchNumberOfFriendsFor} = td.replace('./slow-operation-to-mock')  
+const { judgeMe } = require("./module-under-test");
+```
+
+The first line makes it so all subsequent imports/requires of the 'slow-operation-to-mock' will get a testdouble instead of loading the actual file.
+
+The second line loads the module-under-test, which, internally, gets our mock, instead of the 'slow-operation-to-mock' that it references.
+
+So you can basically write test like this:
+
+```typescript
+import * as td from "testdouble";
+
+test("happy scenario", async () => {
+  const {fetchNumberOfFriendsFor} = td.replace('./slow-operation-to-mock')
+  const { judgeMe } = require("./module-under-test");
+
+  const NAME = "some name"
+
+  td.when(fetchNumberOfFriendsFor(NAME)).thenResolve(5);
+
+  const result = await judgeMe(NAME);
+  expect(result).toEqual("Get out and make some friends!");
+});
+```
+
+That's very handy  and it works great in the JavaScript world, but it has a big disadvantage. It loses types. Now we could resolve whatever we want, and pass whatever we want to the function as arguments. Then we could implement our code based on the wrong assumptions and mock we just put in, and have tests passing!
+
+Luckily, there is a different way:
+
+```typescript
+import * as td from "testdouble";
+// Note the td.replace between imports here:
+td.replace('./slow-operation-to-mock')
+import {fetchNumberOfFriendsFor} from "./slow-operation-to-mock";
+import { judgeMe } from "./module-under-test";
+
+const NAME = "some name";
+
+test("happy scenario", async () => {
+  td.when(fetchNumberOfFriendsFor(NAME)).thenResolve(100);
+
+  const result = await judgeMe(NAME);
+  expect(result).toEqual("Nice job! You have plenty of friends!");
+});
+
+test("Not so happy scenario", async () => {
+  td.when(fetchNumberOfFriendsFor(NAME)).thenResolve(5);
+
+  const result = await judgeMe(NAME);
+
+  expect(result).toEqual("Get out and make some friends!");
+});
+```
+
+It looks a bit weird but once you learn the pattern you will not think twice about it.
+
+The weirdness comes from the fact that we need to run td.replace() before we import the module that will use it. We had to do the same thing with td.replace() and require() calls but that didn't cause us to mix imports and functions calls.
+
+*If you have eslint enabled it might complain about that with:*
+
+*`Import in body of module; reorder to top.(import/first)`*
+
+*You will have to ignore that rule for the test files in which you use this technique, put `/* eslint-disable import/first */ `at the top of your file*
+
+To have all this work you will have to do one more thing, add a `jest.setup.js` file:
+
+```typescript
+const td = require('testdouble')
+require('testdouble-jest')(td, jest)
+```
+
+and add this line to jest config:
+
+```typescript
+setupFiles: ["./jest.setup.js"],
+```
+
+Jest itself does a very similar thing but it "hoists" (moves) all the replace calls before the imports, so it effectively has the code of the same shape before executing it, it just makes eslint happy, and code "feel" less weird.
+
+I plan to write a ts-jest transformer that does the same thing for testdouble, so stay tuned!
+
+Here is an example repo with the code: [https://github.com/xolvio/jest-testdouble-replace-typescript-example](https://github.com/xolvio/jest-testdouble-replace-typescript-example?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

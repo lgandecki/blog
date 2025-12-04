@@ -1,0 +1,48 @@
+---
+title: "Sharing scalars between modules with Chimp"
+publishedAt: "2021-06-28"
+summary: "Now, starting with version chimp@4.1.2 if you just want to use a scalar in a given module, but do not want to redefine it, use @predefined directive."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff95d837dea29579f612a1_kelly-sikkema-XX2WTbLr3r8-unsplash.webp"
+---
+
+Previously if you wanted to reuse the same scalar in different modules you had to redefine it in all of them.
+That made sense from the modularity point of view - after all the modules are supposed to be self-sufficient. But scalars are such low-level building blocks that they are usually shared and it made sense to come up with a new pattern.
+We discussed and came up with a backward-compatible solution with `@jmvtrinidad` and `@ovidiup13`.
+Now, starting with version `chimp@4.1.2` if you just want to use a scalar in a given module, but do not want to redefine it, use `@predefined` directive.
+
+### For example:
+
+src/global/global.graphql
+
+```typescript
+scalar JSON
+scalar Date
+```
+
+‍*‍*src/moduleOne/moduleOne.graphql
+
+```typescript
+type WithJSON {
+  id: ID!
+  json: JSON!
+}
+scalar JSON @predefined
+```
+
+src/moduleTwo/moduleTwo.graphql
+
+```typescript
+type WithDate {
+  id: ID!
+  date: Date!
+}
+scalar Date @predefined
+```
+
+will result with `src/global/scalars/Date.ts` and `src/global/scalars/JSON.ts` files generated and connected to the apollo resolvers object. moduleOne and moduleTwo will NOT generate their versions of scalars but will be using the ones implemented in `src/global/scalars/`.
+
+Obviously if you extract a given module to a separate micrograph you will need to remove the `@predefined` keyword and reimplement the scalar. If you are not sure what am I talking about here - don't worry, you probably don't need to. :-)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

@@ -1,0 +1,191 @@
+---
+title: "Adding chimp 3 to an existing Application"
+publishedAt: "2021-02-12"
+summary: "This article is based on my notes from adding chimp to an existing app"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66fffcf7ac25d2a0c40469bd_%20chimpstockroger.webp"
+---
+
+[Watch on YouTube](https://www.youtube.com/watch?v=w8JpCQP8oag)
+
+Note: We will base our work on this repository: [https://github.com/xolvio/chimp-gql-tiny-example/tree/data-sources](https://github.com/xolvio/chimp-gql-tiny-example/tree/data-sources?ref=xolvio.ghost.io) and the selected branch (data-sources)
+
+First, we will initialize chimp:
+
+```typescript
+npx chimp init
+```
+
+We need to manually configure jest.config.js
+
+```typescript
+const { pathsToModuleNameMapper } = require("ts-jest/utils");  
+const { compilerOptions } = require("./tsconfig");  
+  
+module.exports = {  
+  preset: "ts-jest",  
+  testEnvironment: "node",  
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {  
+  prefix: "/"  
+  })  
+};
+```
+
+`‍`I'm removing these two dependencies from the package.json because they will be used as build-time, not run-time.
+
+```typescript
+"@graphql-tools/graphql-file-loader": "^6.0.18",  
+"@graphql-tools/load": "^6.0.18",
+```
+
+Add the tsconfig-paths to the start script
+
+```typescript
+-r tsconfig-paths/register
+```
+
+Now we are ready to install dependencies:
+
+```typescript
+yarn
+```
+
+Prepare context (./src/context.ts):
+
+```typescript
+import { dataSources } from "~app/dataSources";  
+  
+export type GqlContext = { dataSources: ReturnType };
+```
+
+Remove the example module.
+
+Move Library to modules
+
+Change dataSources.ts Library path
+
+```typescript
+Library.books needs @computed 
+Book.Library needs @link
+```
+
+modules/Library/Library.graphql
+
+Generate files with chimp:
+
+```typescript
+yarn chimp
+```
+
+Optional: to make Webstorm happy mark top schema.graphql and generated/graphql/schema.ts as plaintext.
+
+Move resolvers:
+BookLibrary
+LibraryBooks
+
+There will be an error in the return type of LibraryBooks - add @computed to Author.graphql book->Author
+
+resolvers.ts - use chimpResolvers
+
+```typescript
+import { resolvers as chimpResolvers } from "~generated/graphql/resolvers";
+```
+
+schema.ts - use ./schema.graphql
+
+Check example query
+
+```typescript
+query {
+  libraries {
+    branch
+    books {
+      author {
+        name
+      }
+      library {
+        branch
+      }
+    }
+  }
+}
+```
+
+The existing test is passing.
+The new ones are as well, although they are not implemented.
+The one lines are probably not worth testing (types are doing their job)
+BookLibrary has some logic so let's test that one.
+
+```typescript
+test("BookLibrary", async () => {
+  const context = td.object();
+  td.when(context.dataSources.libraryApi.getLibraries()).thenResolve([
+    { id: "matchingId", branch: "matchingBranch" },
+    { id: "notMatchingId", branch: "notMatchingBranch" },
+  ]);
+  const parent: ParentType = {
+    library: "matchingId",
+    id: "some id ",
+    title: "some title",
+  };
+
+  const result = await testBookLibrary(parent, context);
+
+  expect(result).toEqual({ id: "matchingId", branch: "matchingBranch" });
+});
+```
+
+We also want to see it fail. - change === to !== in BookLibrary.ts resolver -
+
+```typescript
+libraries.find((l) => l.id !== book.library)
+```
+
+Once we see it fail we know that the test is doing its job.
+
+Move Author to ./src/modules/
+
+Change dataSources
+
+yarn chimp
+
+Looks like I'm missing one resolver, let's add that one.
+
+```typescript
+extend type Author {
+  books: [Book!]! @link
+}
+```
+
+to src/modules/Library.graphql
+
+```typescript
+query {
+  libraries {
+    branch
+    books {
+      author {
+        name
+        books {
+          id
+          title
+        }
+      }
+      library {
+        branch
+      }
+    }
+  }
+}
+```
+
+remove resolvers and schema
+
+and finally in index.ts:
+
+```typescript
+import { schema } from "~generated/graphql/schema";
+```
+
+Let me know if you have any questions or thoughts in the comments below.
+
+This article is based on my notes from adding chimp to an existing app, I'd recommend watching it there as I discuss the steps and reason for some design decisions in Chimp in depth. But if you want to be able to copy/paste some of the code, or if you want to be able to easier find this article with Google in the future, I'm leaving the notes here. :) The final diff is available [here](https://github.com/xolvio/chimp-gql-tiny-example/pull/2?ref=xolvio.ghost.io), but it's highly recommended watching the video or try the steps manually to get a "feel" of the chimp workflow. The diff tells only half of the story.

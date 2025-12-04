@@ -1,11 +1,21 @@
 import fs from 'fs'
 import path from 'path'
+import { getPlaiceholder } from 'plaiceholder'
 
 type Metadata = {
   title: string
   publishedAt: string
   summary: string
   image?: string
+  heroImage?: string
+}
+
+export type BlogPost = {
+  metadata: Metadata
+  slug: string
+  content: string
+  readingTime: number
+  heroImageBlur?: string
 }
 
 function parseFrontmatter(fileContent: string) {
@@ -35,21 +45,50 @@ function readMDXFile(filePath) {
   return parseFrontmatter(rawContent)
 }
 
-function getMDXData(dir) {
-  let mdxFiles = getMDXFiles(dir)
-  return mdxFiles.map((file) => {
-    let { metadata, content } = readMDXFile(path.join(dir, file))
-    let slug = path.basename(file, path.extname(file))
-
-    return {
-      metadata,
-      slug,
-      content,
-    }
-  })
+function calculateReadingTime(content: string): number {
+  const wordsPerMinute = 200
+  const words = content.trim().split(/\s+/).length
+  return Math.max(1, Math.ceil(words / wordsPerMinute))
 }
 
-export function getBlogPosts() {
+async function getBlurDataURL(imageUrl: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(imageUrl)
+    if (!response.ok) return undefined
+    const buffer = await response.arrayBuffer()
+    const { base64 } = await getPlaiceholder(Buffer.from(buffer))
+    return base64
+  } catch {
+    return undefined
+  }
+}
+
+async function getMDXData(dir): Promise<BlogPost[]> {
+  let mdxFiles = getMDXFiles(dir)
+  const posts = await Promise.all(
+    mdxFiles.map(async (file) => {
+      let { metadata, content } = readMDXFile(path.join(dir, file))
+      let slug = path.basename(file, path.extname(file))
+      let readingTime = calculateReadingTime(content)
+      let heroImageBlur: string | undefined
+
+      if (metadata.heroImage) {
+        heroImageBlur = await getBlurDataURL(metadata.heroImage)
+      }
+
+      return {
+        metadata,
+        slug,
+        content,
+        readingTime,
+        heroImageBlur,
+      }
+    })
+  )
+  return posts
+}
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
   return getMDXData(path.join(process.cwd(), 'app', '(main)', 'blog', 'posts'))
 }
 
