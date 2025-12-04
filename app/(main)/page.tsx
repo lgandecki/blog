@@ -46,20 +46,43 @@ export default async function Page() {
 
   return (
     <div className="bg-background text-foreground">
-      <section className="mx-auto w-full max-w-5xl px-6 py-20">
-        <div className="max-w-3xl">
+      <section className="mx-auto w-full max-w-5xl px-6 pt-20 pb-8">
+        <div className="max-w-4xl">
           <h1 className="mb-6 text-5xl font-bold tracking-tight md:text-6xl">AI Engineer</h1>
-          <p className="mb-8 text-xl leading-relaxed text-muted-foreground">
-            Two decades of building scalable systems and leading teams for startups and enterprises (2K Games, Audi,
-            ...). Specialized in full-stack architecture, Artificial Intelligence, developer tooling.
+          <p className="mb-6 text-xl leading-relaxed text-muted-foreground">
+            Two decades of building scalable systems and leading teams for startups and enterprises.
+            <br />
+            Specialized in full-stack architecture, Artificial Intelligence, developer tooling.
           </p>
-          <div className="flex flex-wrap gap-4">
-            <Button variant="default" size="lg" asChild>
-              <a href="#projects">View Projects</a>
-            </Button>
-            <Button variant="outline" size="lg" asChild>
-              <a href="#contact">Get in Touch</a>
-            </Button>
+          <div className="mt-8 mb-0 flex flex-wrap items-center gap-6 opacity-60">
+            <Image
+              src="/assets/2K Games Logo.svg"
+              alt="2K Games"
+              width={60}
+              height={40}
+              className="h-8 w-auto grayscale dark:invert"
+            />
+            <Image
+              src="/assets/Audi Logo 2016.svg"
+              alt="Audi"
+              width={80}
+              height={28}
+              className="h-7 w-auto grayscale dark:invert"
+            />
+            <Image
+              src="/assets/Wayfair Logo.svg"
+              alt="Wayfair"
+              width={100}
+              height={24}
+              className="h-6 w-auto grayscale dark:invert"
+            />
+            <Image
+              src="/assets/Alef.png.webp"
+              alt="Alef Education"
+              width={80}
+              height={32}
+              className="h-8 w-auto grayscale dark:invert"
+            />
           </div>
         </div>
       </section>
