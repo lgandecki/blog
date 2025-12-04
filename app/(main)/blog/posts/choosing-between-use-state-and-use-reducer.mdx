@@ -11,6 +11,8 @@ This is one of the things that you should see with your eyes, so I'd recommend w
 
 I start with useState, show a bug in the below code, then refactor to useReducer, add redux/toolkit to it, and then finally refactor to "use-complex-state". I'm leaving the source code here, so you can play around with it:
 
+**useState with a bug**
+
 ```typescript
 function App() {
   const [counter, setCount] = useState(0);
@@ -40,7 +42,7 @@ function App() {
 }
 ```
 
-**useState with a bug**
+**useReducer - everything works, but verbose code**
 
 ```typescript
 const initialState = { counter: 0 };
@@ -88,7 +90,7 @@ function App() {
 }
 ```
 
-**useReducer - everything works, but verbose code**
+**useReducer with Redux Toolkit**
 
 ```typescript
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
@@ -138,7 +140,7 @@ function App() {
 }
 ```
 
-**useReducer with Redux Toolkit**
+**useComplexState hook**
 
 ```typescript
 import { PayloadAction } from "@reduxjs/toolkit";
@@ -187,7 +189,5 @@ export default function App() {
   );
 }
 ```
-
-**useComplexState hook**
 
 Let me know if you have any questions or thoughts in the comments below.

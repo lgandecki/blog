@@ -26,7 +26,7 @@ Using the TypeScriptFunction from our tool gives you the ability to use the `upd
 
 Assuming your stack is declared at `./src/cdk.ts` Run it like this:
 
-```typescript
+```bash
 npx update-typescript-function ./src/cdk.ts
 ```
 
@@ -36,7 +36,7 @@ And it will quickly and automatically update all TypeScript Lambda functions fou
 
 Actually, you might need to do a few exports first... ;-)
 
-```typescriptyou
+```bash
 export AWS_SECRET_ACCESS_KEY=SECRET_ACCESS_KEY
 export AWS_ACCESS_KEY_ID=ACCESS_KEY
 export AWS_REGION=us-east-2
@@ -61,7 +61,7 @@ We like to deploy a stack per branch, so all our branches have different StackNa
 The compilation and uploading of functions happen in parallel. Because of that it is crazy fast (less than 10 s for ~20 functions) and in most cases that is what you should be doing. It comes with the advantage that if you change a code that's used by a few different functions, all of them will be redeployed. Sometimes you might not realize that some piece of code is used in multiple places and get yourself in some weird inconsistent state.
 But if you must, or if you have hundreds of functions in the stack, it's simple, get the Logical ID of a function (using aws cli or going to the stack using their cloudformation panel), and do:
 
-```typescript
+```bash
 npx update-typescript-function ./src/cdk.ts PurchaseEndpointIKYULFRNR9VJ
 ```
 
