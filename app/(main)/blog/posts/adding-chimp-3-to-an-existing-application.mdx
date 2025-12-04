@@ -11,49 +11,51 @@ Note: We will base our work on this repository: [https://github.com/xolvio/chimp
 
 First, we will initialize chimp:
 
-```typescript
+```bash
 npx chimp init
 ```
 
 We need to manually configure jest.config.js
 
 ```typescript
-const { pathsToModuleNameMapper } = require("ts-jest/utils");  
-const { compilerOptions } = require("./tsconfig");  
-  
-module.exports = {  
-  preset: "ts-jest",  
-  testEnvironment: "node",  
-  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {  
-  prefix: "/"  
-  })  
+const { pathsToModuleNameMapper } = require("ts-jest/utils");
+const { compilerOptions } = require("./tsconfig");
+
+module.exports = {
+  preset: "ts-jest",
+  testEnvironment: "node",
+  moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths, {
+    prefix: "/",
+  }),
 };
 ```
 
-``I'm removing these two dependencies from the package.json because they will be used as build-time, not run-time.
+I'm removing these two dependencies from the package.json because they will be used as build-time, not run-time.
 
-```typescript
-"@graphql-tools/graphql-file-loader": "^6.0.18",  
+```javascript
+{
+"@graphql-tools/graphql-file-loader": "^6.0.18",
 "@graphql-tools/load": "^6.0.18",
+}
 ```
 
 Add the tsconfig-paths to the start script
 
-```typescript
+```bash
 -r tsconfig-paths/register
 ```
 
 Now we are ready to install dependencies:
 
-```typescript
+```bash
 yarn
 ```
 
 Prepare context (./src/context.ts):
 
 ```typescript
-import { dataSources } from "~app/dataSources";  
-  
+import { dataSources } from "~app/dataSources";
+
 export type GqlContext = { dataSources: ReturnType };
 ```
 
@@ -63,16 +65,16 @@ Move Library to modules
 
 Change dataSources.ts Library path
 
-```typescript
-Library.books needs @computed 
+modules/Library/Library.graphql
+
+```graphql
+Library.books needs @computed
 Book.Library needs @link
 ```
 
-modules/Library/Library.graphql
-
 Generate files with chimp:
 
-```typescript
+```bash
 yarn chimp
 ```
 
@@ -94,7 +96,7 @@ schema.ts - use ./schema.graphql
 
 Check example query
 
-```typescript
+```graphql
 query {
   libraries {
     branch
@@ -137,7 +139,7 @@ test("BookLibrary", async () => {
 We also want to see it fail. - change === to !== in BookLibrary.ts resolver -
 
 ```typescript
-libraries.find((l) => l.id !== book.library)
+libraries.find((l) => l.id !== book.library);
 ```
 
 Once we see it fail we know that the test is doing its job.
@@ -150,7 +152,7 @@ yarn chimp
 
 Looks like I'm missing one resolver, let's add that one.
 
-```typescript
+```graphql
 extend type Author {
   books: [Book!]! @link
 }
@@ -158,7 +160,7 @@ extend type Author {
 
 to src/modules/Library.graphql
 
-```typescript
+```graphql
 query {
   libraries {
     branch
