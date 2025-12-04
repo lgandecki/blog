@@ -64,8 +64,8 @@ const contactLinks = [
   },
 ];
 
-export default function Page() {
-  let posts = getBlogPosts()
+export default async function Page() {
+  let posts = (await getBlogPosts())
     .sort((a, b) => new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime())
     .slice(0, 3);
 
@@ -178,12 +178,40 @@ export default function Page() {
 
             return (
               <article key={post.slug} className="group">
-                <Link href={`/blog/${post.slug}`} className="block">
-                  <time className="text-sm text-muted-foreground">{formatDate(post.metadata.publishedAt)}</time>
-                  <h3 className="mt-2 mb-2 text-xl font-semibold transition-colors group-hover:text-accent">
-                    {post.metadata.title}
-                  </h3>
-                  <p className="line-clamp-3 text-muted-foreground">{excerpt}</p>
+                <Link href={`/blog/${post.slug}`} className="block sm:flex sm:gap-4">
+                  {post.metadata.heroImage && (
+                    <>
+                      {/* Mobile: wide banner */}
+                      <div className="relative sm:hidden w-full h-32 mb-3 overflow-hidden rounded-md">
+                        <Image
+                          src={post.metadata.heroImage}
+                          alt={post.metadata.title}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          sizes="100vw"
+                          {...(post.heroImageBlur && { placeholder: "blur", blurDataURL: post.heroImageBlur })}
+                        />
+                      </div>
+                      {/* Desktop: side thumbnail */}
+                      <div className="relative hidden sm:block h-24 w-36 flex-shrink-0 overflow-hidden rounded-md">
+                        <Image
+                          src={post.metadata.heroImage}
+                          alt={post.metadata.title}
+                          fill
+                          className="object-cover transition-transform group-hover:scale-105"
+                          sizes="144px"
+                          {...(post.heroImageBlur && { placeholder: "blur", blurDataURL: post.heroImageBlur })}
+                        />
+                      </div>
+                    </>
+                  )}
+                  <div className="flex-1">
+                    <time className="text-sm text-muted-foreground">{formatDate(post.metadata.publishedAt)}</time>
+                    <h3 className="mt-1 mb-1 text-xl font-semibold transition-colors group-hover:text-accent">
+                      {post.metadata.title}
+                    </h3>
+                    <p className="line-clamp-2 text-muted-foreground">{excerpt}</p>
+                  </div>
                 </Link>
               </article>
             );

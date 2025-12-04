@@ -1,0 +1,50 @@
+---
+title: "How to deal with the yarn link \"There's already a package called x registered\" error"
+publishedAt: "2021-03-25"
+summary: "If you work on independent packages (or maybe even open-source npm modules - in which case I salute you!), you probably use the link functionality."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa1018da10a4b42a213a6_jj-ying-PDxYfXVlK2M-unsplash.webp"
+---
+
+Note: tldr at the end of the article ;)
+
+If you work on independent packages (or maybe even open-source npm modules - in which case I salute you!), you probably use the link functionality. And in that case, from time to time you will hit a really terrible warning  message that looks like this:
+
+```typescript
+warning There's already a package called "x" registered. This command has had no effect. If this command was run in another folder with the same name, the other folder is still linked. Please run yarn unlink in the other folder if you want to register this folder.
+```
+
+‍
+
+This error (which is obscured as a warning, even though it stops the execution of the command) should be probably taught in programming schools as a great example of how NOT TO communicate errors to users. ;-)
+
+The program should:
+
+1 - verify whether the current registration matches the folder from which you ran the command - as this is frequently the case! Yarn should just inform the user the action had no effect because this has already been done. In other words - the developer should be able to just continue the work as planned. Maybe it should not even show a warning - unless while being in a debug mode, why should I care that the package I'm linking has already been linked? This message has 0 value to me in most cases, and it might disrupt my flow.
+
+2 - in case the current registration actually does NOT match the folder from which you ran the command (rare case) - it should tell you from which folder the registration was done and  give you an option to force the change.
+
+Since that's not how it works, and the issue has been known for 2 years now ( [https://github.com/yarnpkg/yarn/issues/7054](https://github.com/yarnpkg/yarn/issues/7054?ref=xolvio.ghost.io) ) without any good arguments for keeping things as they are or plans to change it, here comes the solution and also tldr:
+
+```typescript
+# to just remove the link, run:
+rm ~/.config/yarn/link/PACKAGE-NAME / BINARY-NAME
+
+# if you want to play it safe, check where it pointed to first:
+
+$ ls -l ~/.config/yarn/link/cdk-typescript-tooling
+
+# which should give you something like this:
+
+lrwxr-xr-x  1 lukaszgandecki  staff  59 Mar 25 09:04 /Users/lukaszgandecki/.config/yarn/link/cdk-typescript-tooling -> ../../../../../Volumes/fast/Projects/cdk-typescript-tooling
+```
+
+*`‍`*For lost googlers, this is another error you might see, the steps and reasoning stay the same:*‍
+*
+
+```typescript
+There's already a linked binary called "update-typescript-function" in your global Yarn bin.
+```
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

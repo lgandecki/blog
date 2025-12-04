@@ -1,0 +1,240 @@
+---
+title: "Testing with DynamoDB Toolbox"
+publishedAt: "2020-12-30"
+summary: "To do integration tests with your DynamoDB Toolbox setup, it's important to be able to run tests in isolations."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff91d89b424d9722a2e564_caspar-camille-rubin-fPkvU7RDmCo-unsplash.webp"
+---
+
+To do integration tests with your DynamoDB Toolbox setup, it's important to be able to run tests in isolations. Otherwise, different tests could set up the data in a way that breaks other tests. With parallel and randomized execution, this could lead to flaky tests. Flaky tests == sad developers and wasted time, so we definitely want to avoid that.
+
+[We will start with a simple example on the master branch, here](https://github.com/xolvio/dynamodb-toolbox-examples?ref=xolvio.ghost.io)
+
+*If you want to jump to the code right away, go to branch "testing" or take a look at this pr ( *[*https://github.com/xolvio/dynamodb-toolbox-examples/pull/2/files*](https://github.com/xolvio/dynamodb-toolbox-examples/pull/1/files?ref=xolvio.ghost.io)* )*
+
+To achieve true isolation we need each test case to use a separate DynamoDB table. That means, we need to do the Table setup using a different table name.
+
+If you prefer watching from reading, you can watch me here add the tests:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=QRx3dn94_co)
+
+Currently, the src/Customer.ts file only exposes the Customer Entity and does not allow any kind of dynamic configuration. Let's create a function that will return that Customer Entity, but will allow taking a custom table.
+
+From:
+
+```typescript
+export const Customer = new Entity({
+  name: "Customer",
+  attributes: {  // ...  },
+  table: MyTable,
+});
+```
+
+To:
+
+```typescript
+export const getCustomerEntity = (table: Table) =>
+  new Entity({
+    name: "Customer",
+    attributes: {
+      id: { partitionKey: true }, // flag as partitionKey
+      sk: { hidden: true, sortKey: true }, // flag as sortKey and mark hidden
+      co: { alias: "company" }, // alias table attribute 'co' to 'company'
+      status: ["sk", 0], // composite key mapping
+      date_added: ["sk", 1], // composite key mapping
+    },
+    table,
+  });
+```
+
+For backward compatibility and production-use, we want to still export the Customer Entity with the default to match what was exported before.
+
+`export const Customer = getCustomerEntity(MyTable);`
+
+We can customize what table the entity will use now. Now, we just need a way to customize that table. We will do it in a similar way.
+
+Change:
+
+```typescript
+const MyTable = new Table({
+  ...dynamoSdkToToolbox(tableDefinition),
+  DocumentClient,
+});
+```
+
+To:
+
+```typescript
+export const getToolboxTable = (
+  tableName?: string,
+  documentClient?: DynamoDB.DocumentClient
+) =>
+  new Table({
+    ...dynamoSdkToToolbox(tableDefinition),
+    name: tableName || dynamoSdkToToolbox(tableDefinition).name,
+    DocumentClient: documentClient || DocumentClient,
+  });
+
+const MyTable = getToolboxTable();
+```
+
+‍`‍`This way we can pass custom tableName and documentClient.
+
+Now we are able to use dynamodb-testing-tool to do some testing.
+
+Install it first:
+
+```typescript
+npm install --save-dev dynamodb-testing-tool
+```
+
+Let's create Customer.spec.ts and do some setup.
+
+We will start with a single test:
+
+```typescript
+test("Putting and getting a Customer", async () => {})
+```
+
+First, we need to create an in-memory DynamoDB Table with a randomly generated name (to avoid collisions and achieve isolation):
+
+```typescript
+import { createTable, generateRandomName } from "dynamodb-testing-tool";
+import { tableDefinition } from "./tableDefinition";
+
+test("Putting and getting a Customer", async () => {
+  const tableObject = await createTable({
+    ...tableDefinition,
+    TableName: generateRandomName(),
+  });
+
+})
+```
+
+Now we want to get a Customer Entity that uses a ToolboxTable configured with that randomName and matching documentClient.
+
+```typescript
+import { createTable, generateRandomName } from "dynamodb-testing-tool";
+import { tableDefinition } from "./tableDefinition";
+// Import the getter functions we made earlier:
+import { getToolboxTable, getCustomerEntity } from "./Customer";
+
+test("Putting and getting a Customer", async () => {
+  const tableObject = await createTable({
+    ...tableDefinition,
+    TableName: generateRandomName(),
+  });
+
+  // Declare and initialize the Customer variable here
+  const Customer = getCustomerEntity(
+    getToolboxTable(tableObject.tableName, tableObject.documentClient)
+  );
+})
+```
+
+As you can see, the createTable function returns an object on which you can find the tableName (which we randomly generated) and the documentClient associated with that table.
+
+Now we should be able to use our entity:
+
+```typescript
+test("Putting and getting a Customer", async () => {
+
+// ...
+  const item = {
+    id: 123,
+    company: "COMPANY_1",
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  await Customer.put(item);
+
+  const itemToGet = {
+    id: 123,
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  const response = await Customer.get(itemToGet);
+  expect(response.Item.status).toEqual("active");
+  expect(response.Item.date_added).toEqual("2020-04-24");
+  expect(response.Item.company).toEqual("COMPANY_1");
+})
+```
+
+Green!
+
+But, so far we haven't really proved the isolation, we have one test, and we set up everything inside it.
+
+Let's move the setup to an external function:"
+
+```typescript
+const getConfiguredEntity = async () => {
+  const tableObject = await createTable({
+    ...tableDefinition,
+    TableName: generateRandomName(),
+  });
+
+  return getCustomerEntity(
+    getToolboxTable(tableObject.tableName, tableObject.documentClient)
+  );
+};
+```
+
+Your test should now only consist of the database operations logic:
+
+```typescript
+test("Putting and getting a Customer", async () => {
+  const Customer = await getConfiguredEntity();
+  const item = {
+    id: 123,
+    company: "COMPANY_1",
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  await Customer.put(item);
+
+  const itemToGet = {
+    id: 123,
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  const response = await Customer.get(itemToGet);
+  expect(response.Item.status).toEqual("active");
+  expect(response.Item.date_added).toEqual("2020-04-24");
+  expect(response.Item.company).toEqual("COMPANY_1");
+});
+```
+
+ can add another test, that will use very similar items, with the same (conflicting) id, but different data. Let's tweak the company name:`‍`
+
+```typescript
+test("Collisions should not be a problem", async () => {
+  const item = {
+    id: 123,
+    company: "COMPANY_2",
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  await Customer.put(item);
+
+  const itemToGet = {
+    id: 123,
+    status: "active",
+    date_added: "2020-04-24",
+  };
+
+  const response = await Customer.get(itemToGet);
+  expect(response.Item.status).toEqual("active");
+  expect(response.Item.date_added).toEqual("2020-04-24");
+  expect(response.Item.company).toEqual("COMPANY_2");
+});
+```
+
+Green again! :)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

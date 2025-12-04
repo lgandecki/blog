@@ -1,0 +1,67 @@
+---
+title: "Centralize your AWS Lambda Errors"
+publishedAt: "2020-11-25"
+summary: "Having multiple independent lambda functions is great, but it comes with a price of difficult monitoring."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66fff83e3950422e86a432b1_timj-Vrv_nZHaFTc-unsplash.webp"
+---
+
+note: You need to deploy your Lambdas using CDK and our TypeScriptFunction construct from cdk-typescript-tooling for this to work. If you don't use it and don't want to start, no worries! We encourage you to take a peek at how we implemented it: [https://github.com/xolvio/cdk-typescript-tooling/blob/master/src/typeScriptFunction.ts#L350-L356](https://github.com/xolvio/cdk-typescript-tooling/blob/master/src/typeScriptFunction.ts?ref=xolvio.ghost.io#L350-L356). It's pretty straightforward. Feel free to do something similar in your codebase :)
+
+### Why?
+
+Having multiple independent lambda functions is great, but it comes with a price of difficult monitoring.
+We like to be notified of things going wrong, as early as possible and in an automated fashion. New lambda functions should be connected to the system with a minimal setup.
+
+### What?
+
+Our TypeScriptFunction has built-in ability to send Error logs to a passed lambda handler.
+First, create a logHandler:
+
+```typescript
+import { CloudWatchLogsDecodedData, CloudWatchLogsHandler } from "aws-lambda";
+import zlib from "zlib";
+
+export const handler: CloudWatchLogsHandler = async (event, context) => {
+  const compressedPayload = Buffer.from(event.awslogs.data, "base64");
+  const jsonPayload = zlib.gunzipSync(compressedPayload).toString("utf8");
+  const parsed: CloudWatchLogsDecodedData = JSON.parse(jsonPayload);
+  console.log(parsed);
+};
+```
+
+This is the simplest possible one that will just log errors in a CloudWatch stream aggregating all errors from all lambda functions.
+
+Now in your cdk define a TypeScriptFunction that will deploy that code. Assign its handle to a variable.
+
+```typescript
+import { SubscriptionFilter, FilterPattern } from "@aws-cdk/aws-logs";
+import * as LogsDestinations from "@aws-cdk/aws-logs-destinations";
+//...
+const logHandle = new TypeScriptFunction(scope, "logHandler", {
+  entry: require.resolve("@sales/logHandler/src/handler.ts"),
+});
+```
+
+Pass it to existing function like so:
+
+```typescript
+new TypeScriptFunction(scope, "Purchase-Status-Endpoint", {
+  entry: require.resolve("@sales/purchase-endpoint/src/handler.ts"),
+  logFunction: logHandle,
+});
+```
+
+`‍`
+
+Now, whenever any error (console.error or exception) shows up in the Purchase-Status-Endpoint, it will be passed and displayed by the logHandler.
+Obviously, the usefulness of that increases with the number of lambdas you have. :-)
+
+Enjoy!
+
+‍
+
+https://www.npmjs.com/package/cdk-typescript-tooling?ref=xolvio.ghost.io
+
+‍
+
+Let me know if you have any questions or thoughts in the comments below.

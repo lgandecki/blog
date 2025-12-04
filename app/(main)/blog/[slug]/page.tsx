@@ -4,9 +4,10 @@ import { formatDate, getBlogPosts } from "app/(main)/blog/utils";
 import { baseUrl } from "app/(main)/sitemap";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export async function generateStaticParams() {
-  let posts = getBlogPosts();
+  let posts = await getBlogPosts();
 
   return posts.map((post) => ({
     slug: post.slug,
@@ -15,13 +16,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   let { slug } = await params;
-  let post = getBlogPosts().find((post) => post.slug === slug);
+  let posts = await getBlogPosts();
+  let post = posts.find((post) => post.slug === slug);
   if (!post) {
     return;
   }
 
-  let { title, publishedAt: publishedTime, summary: description, image } = post.metadata;
-  let ogImage = image ? image : `${baseUrl}/og?title=${encodeURIComponent(title)}`;
+  let { title, publishedAt: publishedTime, summary: description, image, heroImage } = post.metadata;
+  let ogImage = heroImage || image || `${baseUrl}/og?title=${encodeURIComponent(title)}`;
 
   return {
     title,
@@ -47,23 +49,49 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
+function HeroImage({ src, alt, blurDataURL }: { src: string; alt: string; blurDataURL?: string }) {
+  return (
+    <div className="relative w-full aspect-[16/9] overflow-hidden rounded-lg">
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority
+        className="object-cover"
+        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1024px"
+        {...(blurDataURL && { placeholder: "blur", blurDataURL })}
+      />
+    </div>
+  );
+}
+
+function AuthorMetadata({ date, readingTime }: { date: string; readingTime: number }) {
+  return (
+    <div className="flex items-center gap-3">
+      <Image src="/assets/profile.jpg" alt="Lukasz Gandecki" width={48} height={48} className="rounded-full" />
+      <div>
+        <p className="font-medium">Lukasz Gandecki</p>
+        <p className="text-sm text-muted-foreground">
+          {formatDate(date)} · {readingTime} min read
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default async function Blog({ params }: { params: Promise<{ slug: string }> }) {
   let { slug } = await params;
-  let post = getBlogPosts().find((post) => post.slug === slug);
+  let posts = await getBlogPosts();
+  let post = posts.find((post) => post.slug === slug);
 
   if (!post) {
     notFound();
   }
 
+  const hasHeroImage = !!post.metadata.heroImage;
+
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
-      <Link
-        href="/blog"
-        className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 mb-8"
-      >
-        <ArrowLeft className="h-4 w-4" />
-        <span>Back to Blog</span>
-      </Link>
       <script
         type="application/ld+json"
         suppressHydrationWarning
@@ -75,21 +103,41 @@ export default async function Blog({ params }: { params: Promise<{ slug: string 
             datePublished: post.metadata.publishedAt,
             dateModified: post.metadata.publishedAt,
             description: post.metadata.summary,
-            image: post.metadata.image
-              ? `${baseUrl}${post.metadata.image}`
-              : `/og?title=${encodeURIComponent(post.metadata.title)}`,
+            image:
+              post.metadata.heroImage || post.metadata.image
+                ? `${baseUrl}${post.metadata.heroImage || post.metadata.image}`
+                : `/og?title=${encodeURIComponent(post.metadata.title)}`,
             url: `${baseUrl}/blog/${post.slug}`,
             author: {
               "@type": "Person",
-              name: "My Portfolio",
+              name: "Lukasz Gandecki",
             },
           }),
         }}
       />
+
+      {/* Desktop: Hero image first */}
+      {hasHeroImage && (
+        <div className="hidden md:block mb-8">
+          <HeroImage src={post.metadata.heroImage!} alt={post.metadata.title} blurDataURL={post.heroImageBlur} />
+        </div>
+      )}
+
+      {/* Title */}
       <h1 className="title font-semibold text-2xl tracking-tighter">{post.metadata.title}</h1>
-      <div className="flex justify-between items-center mt-2 mb-8 text-sm">
-        <p className="text-sm text-neutral-600 dark:text-neutral-400">{formatDate(post.metadata.publishedAt)}</p>
+
+      {/* Author metadata */}
+      <div className="mt-4 mb-8">
+        <AuthorMetadata date={post.metadata.publishedAt} readingTime={post.readingTime} />
       </div>
+
+      {/* Mobile: Hero image after metadata */}
+      {hasHeroImage && (
+        <div className="block md:hidden mb-8">
+          <HeroImage src={post.metadata.heroImage!} alt={post.metadata.title} blurDataURL={post.heroImageBlur} />
+        </div>
+      )}
+
       <article className="prose text-foreground dark:text-foreground">
         <CustomMDX source={post.content} />
       </article>

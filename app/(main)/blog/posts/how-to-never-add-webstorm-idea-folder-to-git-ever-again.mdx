@@ -1,0 +1,36 @@
+---
+title: "How to never add WebStorm .idea folder to git ever again"
+publishedAt: "2021-01-10"
+summary: "Frequently when you work with an open-source repository you might accidentally commit your .idea folder to it."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9abe4d9b991ef032e42f_james-pond-1qkyck-UL3g-unsplash.webp"
+---
+
+Frequently when you work with an open-source repository you might accidentally commit your .idea folder to it. Maintainers of these repositories frown upon you changing their holy .gitignore file to prevent this problem. They don't want to hear about your crazy ideas of using a closed-source, commercial, and paid-for IDE.
+
+There is a simple trick to help that I wish I discovered years ago.
+
+The steps are very simple:
+
+1) Create a global .gitignore file:
+
+```typescript
+touch ~/.gitignore_global
+```
+
+2) adding the '.idea' line to it in any way you want, but preferably with your expensive IDE:
+
+```typescript
+webstorm ~/.gitignore_global # or vim ~/.gitignore_global or .. you get the point
+```
+
+3) and then configure git to use it:
+
+```typescript
+git config --global core.excludesfile ~/.gitignore_global
+```
+
+That's it! You will never have to feel like a sapper on a minefield again.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

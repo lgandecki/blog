@@ -1,0 +1,26 @@
+---
+title: "Chimp v2.3.0 released. Custom Prefixes for Monorepos"
+publishedAt: "2020-10-26"
+summary: "With the new version chimp allows you to set up custom prefixes for your chimp apps."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa41afa1e19beccc35708_he-gong-FndgCa5RRyQ-unsplash.webp"
+---
+
+With the new version [chimp](https://www.chimpjs.com/?ref=xolvio.ghost.io) allows you to set up custom prefixes for your chimp apps. That will allow you to work in a monorepo structure, without some tooling getting confused by the conflicting aliasing.
+When creating apps make sure to pass the new optional arguments, like so:
+
+```typescript
+npx chimp gql:create admin '~admin' '~admin-generated'
+```
+
+If you create a new app that will be done for you automatically, but if you decide to add different prefixes to an existing app, make sure your code generator script reflects that for example:\
+
+```typescript
+chimp gql:generate '~admin' '~admin-generated'
+```
+
+Take a look at this repo to see working code:
+[https://github.com/xolvio/chimp-monorepo-example](https://github.com/xolvio/chimp-monorepo-example?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

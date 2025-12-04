@@ -1,0 +1,56 @@
+---
+title: "Make Oh My Zsh history play nicely with WebStorm / IntelliJ"
+publishedAt: "2020-11-22"
+summary: "Disappearing history entries were bugging me for a long time. I would try to look for a command that I KNEW I recently typed, but it was gone."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9727a0cf072f0755a09b_pexels-pixabay-36006.webp"
+---
+
+Disappearing history entries were bugging me for a long time. I would try to look for a command that I ***KNEW* **I recently typed, but it was gone.
+
+Today I felt that enough is enough. I noticed I had a different command history in iterm, different in WebStorm, and on top of that none of them had the command I was looking for.
+
+After a quick investigation, it looks like WebStorm is mostly to blame since its "shell integration" functionality overwrites some settings set up by OhMyZsh, in particular, the file to which write history.
+
+Additionally, I believe both WebStorm and OhMyZsh  by default write to history on a successful terminal exit. Which tends to be problematic if your sessions don't quit cleanly, or frequently :)
+
+Solution:
+
+Add
+
+```typescript
+export HISTFILE=~/.zsh_history
+export HISTFILESIZE=1000000000
+export HISTSIZE=1000000000
+setopt APPEND_HISTORY 
+setopt INC_APPEND_HISTORY
+```
+
+at the end of your ~/.zshrc file.
+
+The first line is most important, and you can possibly skip the other ones. It forces WebStorm to use the same history file.
+
+As for the ones about Hist Size - I've increased the limits since I'm not sure what's the point of removing old entries - they are also possibly a useful source of information. With how fast and large our SSD hard drives are, I don't expect this to become problematic for years :) And if the history seems to get slower, I can always trim it.
+
+APPEND_HISTORY and INC_APPEND_HISTORY are possibly already happening, and are responsible for adding commands to the history file as they happen, but I don't trust WebStorm anymore not to mess with the settings in the future, so I decided to add them here just to be safe.
+
+One last thing, let's merge the histories together (hacky way and the history will not be in order, but it worked for me):
+
+```typescript
+# back up your current history:
+cp ~/.zsh_history ~/.zsh_history.bak
+# Run this from a terminal tab inside IDE and make sure it references a file from WebStorm/IntelliJ folder
+echo $HISTFILE
+
+# If it does, run:
+
+cat `echo $HISTFILE` >> ~/.zsh_history
+
+# to merge the histories together. If something went wrong, you can restore the old history:
+# mv  ~/.zsh_history.bak ~/.zsh_history
+```
+
+Feel free to let me know if what I'm doing here is crazy - it definitely fixed my issue.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

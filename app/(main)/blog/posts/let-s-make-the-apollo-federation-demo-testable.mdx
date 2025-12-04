@@ -1,0 +1,576 @@
+---
+title: "Automated Testing with Apollo Federation"
+publishedAt: "2019-06-05"
+summary: "Taking this opportunity, I'm excited to introduce a package that I hope will make it much easier to test your precious services — federation-testing-tool"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff97be4d9b991ef03010a8_federico-beccari-ahi73ZN5P0Y-unsplash.webp"
+---
+
+The Apollo team recently released the Apollo Federation tool with an appropriate update of their Apollo Gateway. These tools together are meant to make it easier to build a “distributed graph”. In other words — GraphQL services as isolated modules that fit in the microservice architecture. There are many arguments around the microservices vs monolith debate, but I will focus on one aspect that’s closest to my heart — testability. Taking this opportunity, I’m excited to introduce a package that I hope will make it much easier to test your precious services — [https://github.com/xolvio/federation-testing-tool](https://github.com/TheBrainFamily/federation-testing-tool?ref=xolvio.ghost.io)
+
+One of the main advantages of the microservices pattern is the ease of testing the small services (modules) independently. The setup for tests is minimal, the code surface is small, because of that, when things break it’s easy to understand why. The builds tend to be faster, which allows for a shorter feedback loop, increasing the developers' productivity, happiness, and the feeling of flow.
+
+One of the main disadvantages of the microservice pattern, on the other hand, is the difficulty of testing the integration between modules. With a well-structured monolith, you are able to write relatively fast and easy to set up integration tests that can all run together in a CI build. That gives you a significant amount of confidence that your application will work the way it’s supposed to. When you run all the tests for each microservice separately, that doesn’t really tell you how well they will work altogether. There are ways to mitigate this problem, but it comes with extra complexity compared to good old monolith solutions.
+
+In this article, I want to argue that a new pattern enabled by the Apollo Federation allows us to combine the best of both worlds. Let me demonstrate how, based on the example prepared by the Apollo Team themselves.
+
+If you are one of the people that prefer to dive right into the code, please take a look at this [repo](https://github.com/TheBrainFamily/testable-federation-demo/tree/step-2/services/inventory?ref=xolvio.ghost.io) and in particular this [inventory.test.js](https://github.com/TheBrainFamily/testable-federation-demo/blob/step-2/services/inventory/inventory.test.js?ref=xolvio.ghost.io) test.
+
+Otherwise, follow along.
+
+## 1. Preparing for tests
+
+If you haven’t yet done so please clone the [federation example repo](https://github.com/TheBrainFamily/testable-federation-demo.git?ref=xolvio.ghost.io) (same starting point as the original Apollo Federation example, so if you have that one — you are good to go!) and run npm install in the main directory.
+
+Let’s start with the Inventory service.
+
+The first thing we have to do is to separate the schema and resolvers from the index.js, so we can import them without any side effects (in particular starting the server). This is trivial so feel free to skip to part 2 to see how to implement the tests. Otherwise, take a look at the structure of the inventory/index.js file.
+
+```typescript
+// besides requiring a couple of packages..
+const { ApolloServer, gql } = require("apollo-server");
+const { buildFederatedSchema } = require("@apollo/federation");
+
+// we see type definitions,
+const typeDefs = gql``;
+
+// implementation of the resolvers,
+const resolvers = {};
+
+// setup and startup of the server
+const server = new ApolloServer();
+server.listen();
+
+// and finally the fake data store for the inventory
+const inventory = [];
+```
+
+**services/inventory/index.js**
+
+To keep the concerns separate — which typically allows for better tests —  let’s move the type definitions to a separate typeDefs.js file, resolvers with the inventory array to resolvers.js, and require them back in the index.js entry file.
+
+While we are at it, we will change the shippingEstimate to be Float. Otherwise, the client (and our tests!) would get null when the _weight _ 0.5\* ends up not being a whole number.
+
+```typescript
+const { gql } = require("apollo-server");
+
+exports.typeDefs = gql`
+  extend type Product @key(fields: "upc") {
+    upc: String! @external
+    weight: Int @external
+    price: Int @external
+    inStock: Boolean
+    shippingEstimate: Float @requires(fields: "price weight")
+  }
+`;
+```
+
+**typeDefs.js**
+
+`‍`
+
+```typescript
+exports.resolvers = {
+  Product: {
+    __resolveReference(object) {
+      return {
+        ...object,
+        ...inventory.find((product) => product.upc === object.upc),
+      };
+    },
+    shippingEstimate(object) {
+      // free for expensive items
+      if (object.price > 1000) return 0;
+      // estimate is based on weight
+      return object.weight * 0.5;
+    },
+  },
+};
+
+const inventory = [
+  { upc: "1", inStock: true },
+  { upc: "2", inStock: false },
+  { upc: "3", inStock: true },
+];
+```
+
+**services/inventory/resolvers.js**
+
+```typescript
+const { ApolloServer, gql } = require("apollo-server");
+const { buildFederatedSchema } = require("@apollo/federation");
+
+const { typeDefs } = require("./typeDefs");
+const { resolvers } = require("./resolvers");
+
+const server = new ApolloServer({
+  schema: buildFederatedSchema([
+    {
+      typeDefs,
+      resolvers,
+    },
+  ]),
+});
+
+server.listen({ port: 4004 }).then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
+**index.js**
+
+To finish the preparation let’s also install jest in the inventory service. (Make sure you are in the ./services/inventory directory.)
+
+```typescript
+npm install --save-dev jest
+```
+
+## **2. Why do we need a separate tool for testing Federation?**
+
+_The version of this code with the changes up to this point is available here: _[_https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1_](https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1?ref=xolvio.ghost.io)
+
+Now that we have everything nice and decoupled we can get to work.
+
+How do we test this service?
+
+_If you want to learn the pattern I propose, please go to section \***\*3\*\***. If you want to understand the reasoning behind it, and what other options we have, please continue._
+
+The naive way of testing would be to just write Unit Tests directly for the Product resolvers functions, _\_\_resolveReference,_ and _shippingEstimate. _
+
+Those are pure functions after all, what’s easier than doing something like below?
+
+```typescript
+// This is our simplified resolver
+const resolvers = {
+  Product: {
+    shippingEstimate(object) {
+      if (object.price > 1000) return 0;
+      return object.weight * 0.5;
+    },
+  },
+};
+
+// If you are copying/pasting or typing on your own, start from here:
+// or ignore this require and leave the code above for testing purposes.
+const { resolvers } = require("./resolvers");
+
+test("shipping is free if the price is over 1000", () => {
+  expect(resolvers.Product.shippingEstimate({ price: 1001 })).toEqual(0);
+});
+
+test("Shipping is one dollar per two pounds, if price 1000 or below", () => {
+  expect(resolvers.Product.shippingEstimate({ price: 500, weight: 100 })).toEqual(50);
+});
+```
+
+Sure, this will work, you test your business logic, but.. what if you forgot to add “price” in your schema in this line:
+
+```typescript
+shippingEstimate: Int @requires(fields: "price weight")
+```
+
+what if you forgot to mention that the weight is external here:
+
+```typescript
+weight: Int @external
+```
+
+what if you forgot to mention the key, with a correct field:
+
+```typescript
+extend type Product @key(fields: "upc") {
+```
+
+what if you made a typo and wrote a resolver for _shipingEstimate_.. and tested it as such? The list of questions goes on. How much assurance does the above test give you? Will you be able to deploy changes to your microservice with confidence with this kind of coverage? Not really…
+
+When you think about it — this test is really verifying the business logic of the shippingEstimate functionality, not GraphQL layer at all.
+
+So how about using some tricks from the way we test our  Apollo GraphQL servers currently, create an in-memory, networkless server based on the schema and resolvers, send queries to it directly and verify the output?
+
+Better! But.. for starters — we don’t have any queries defined in this service! We only extend the Product type, we don’t even own it.
+
+How come there are no queries? Gateway needs to have a way to somehow request the shippingEstimate from our service, even though that service doesn’t expose any queries on its own. Apollo tooling adds a few things to our services, so the Gateway can resolve the data correctly. There is a GetEntities query exposed, to which we can send a “representation”.
+
+```typescript
+const { buildFederatedSchema } = require("@apollo/federation");
+const { graphql } = require("graphql");
+const { typeDefs } = require("./typeDefs");
+const { resolvers } = require("./resolvers");
+
+const schema = buildFederatedSchema([
+  {
+    typeDefs,
+    resolvers,
+  },
+]);
+
+test("query using GetEntities", async () => {
+  const query = `query GetEntities($representations: [_Any!]!) {
+      _entities(representations: $representations) {
+        ... on Product {
+          shippingEstimate
+        }
+      }
+    }`;
+
+  const variables = {
+    representations: [{ __typename: "Product", upc: "1", weight: 10, price: 100 }],
+  };
+
+  const { data, errors } = await graphql(schema, query, null, null, variables);
+  expect(errors).toBeUndefined();
+  expect(data._entities[0].shippingEstimate).toEqual(5);
+});
+```
+
+Things get a bit cryptic now, but if you don’t understand what’s going on — don’t worry about it, as we won’t be going this route anyway. Even though we moved a bit closer to the GraphQL layer itself, verify the connection between our schema and the resolvers, we still don’t get the assurance we would like to have.
+
+There are still a lot of things that can go wrong. It’s because the Federated Service assumes that the _GetEntities_ query, which is supposed to be called only by Apollo Gateway, will get its data in a correct shape, according to a proper schema. Basically whatever the _GetEntities_ gets, will be passed down to the resolvers related to the type we are trying to test.
+
+Let’s look at our type definitions again:
+
+```typescript
+extend type Product @key(fields: "upc") {
+    upc: String! @external
+    weight: Int @external
+    price: Int @external
+    inStock: Boolean
+    shippingEstimate: Int @requires(fields: "price weight")
+}
+```
+
+Even though I can’t remove (or forget about it in the first place) the *“@key(fields: “upc”)” *directive anymore, because then Product will not be recognized as an Entity that the server can work with, I can still get rid of the
+
+```typescript
+“@requires(fields: “price weight”)”
+```
+
+or remove any of the listed fields.
+
+I can remove the whole
+
+```typescript
+weight: Int @external
+```
+
+line, or just the _@external_ part... You get the point.
+
+It is possible, in theory, to add a bunch of validations in that internal *GetEntities *Query, to make sure things don’t get passed to resolvers that shouldn’t be. I guess it’s a question to the Apollo team if this is something they would consider, but I doubt it would be worth the extra complexity.
+
+_If you want to play around with the two proposed tests, they are added in this branch _[_https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1-1/_](https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1-1?ref=xolvio.ghost.io)_ and in particular this directory: _[_https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1-1/services/inventory/_](https://github.com/TheBrainFamily/testable-federation-demo/tree/step-1-1/services/inventory?ref=xolvio.ghost.io)
+
+## **3. Testing with Federation Testing Tool**
+
+> Just tell me what to do!
+
+Well, alright! But, quickly, to sum up, the reflections from the second point of this article, we want tests that will give us assurance that:
+
+1. our Type Definitions match the implementation of our Resolvers
+2. our Type Definitions are correct in terms of Apollo Federation and GraphQL specifications
+
+What we will do then, is create an in-memory, networkless instance of a gateway. That gateway will have schema loaded from the service under test. We will send our test queries/mutations to the gateway. It will realistically and properly build and execute a query plan required to process our request. The execution will happen through the resolvers of the service we are testing. It will also communicate with another service — a mocked one — to get the data it would otherwise get from another microservice. The responsibility of the mocked service will be to provide all the data that our service describes as @external.
+
+![](https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff97b05370f19dc00e9769_1-EXfQISUk9s25bWe8lYaJYg.png)
+
+This setup will give us a lot of confidence in both points.
+
+Start by creating _services/inventory/inventory.test.js file. _
+
+Let’s test whether we can send a query for a product that results with a correct shippingEstimate. For that, we prepare a query and a scaffolding for two cases we need to verify:
+
+```typescript
+const { gql } = require("apollo-server");
+describe("Based on the data passed down from the gateway, the shippingEstimate", () => {
+  const query = gql`    {      _getProduct {        shippingEstimate      }    }  `;
+  it.todo("should be 0 for an item with a price over 1000");
+  it.todo("should be calculated as 1 dollar per 2 pounds");
+});
+```
+
+Notice that we are using a query generated by the testing tool we are about to use since we don’t have any queries in this service available to us. The testing tool will generate a query of a shape:
+
+```typescript
+`_get${typeName}: ${typeName}`;
+```
+
+for every extended type, it finds in the service type definitions.
+
+Now we need to set up the gateway instance I mentioned above.
+
+Prepare your typeDefs and resolvers, similarly to what you would be doing setting up a standard Apollo Server.
+
+```typescript
+const { gql } = require("apollo-server");
+
+const { typeDefs } = require("./typeDefs");
+const { resolvers } = require("./resolvers");
+
+const service = { typeDefs, resolvers };
+
+// describe("Based on the data passed down from the gateway, the shippingEstimate", () => {
+// ..
+```
+
+Now let’s see what happens when we execute the query, using the federation-testing-tool.
+
+We need to install it first, we will also need the @apollo/gateway for testing purposes:
+
+```typescript
+npm install --save-dev federation-testing-tool @apollo/gateway
+```
+
+And finally:
+
+```typescript
+const { executeGraphql } = require("federation-testing-tool");
+// ...
+
+// Modify your first it.todo function callback, and remove .todo
+it("should be 0 for an item with a price over 1000", async () => {
+  const result = await executeGraphql({ query, service });
+  expect(result.data._getProduct.shippingEstimate).toEqual(0);
+});
+```
+
+Run the tests.
+
+```typescript
+npx jest
+```
+
+If you are unlucky, you have a pass and start questioning your sanity. More probably you will get something like
+
+```typescript
+Expected: 0;
+Received: -14;
+```
+
+What’s going on here? Where is this number coming from? How does this even work?
+
+We could take a look at _services/inventory/resolvers.js_ file and log what our object argument in the shippingEstimate resolver ends up being. Once we put the login and run the tests we quickly realize that the data coming in is random, and if you ever used *graphql-tools *to add mocks to your schema something probably rings a bell.
+
+In the second example of a test (the getEntities one), in the section above, we were passing the “representation” to our service, to verify our resolver's behavior. It looked like this:
+
+```typescript
+{ __typename: "Product", upc: "1", weight: 10, price: 100 }
+```
+
+Which is exactly what our object is in shippingEstimate function now. This is the kind of data that the gateway sends to our microservice. Our microservice needs this data to perform its part of the requested operations (query/mutation).
+
+In our case, we need the weight and price to calculate the shippingEstimation. The upc is not actually required, as (at least with the current implementation) we don’t need to know which product we are calculating the shipment cost for. The calculation is based purely on weight and price.
+
+But, let’s say there is a new feature request. A promotion is announced for a particular set of items and they get shipped for free no matter what their price and weight is — we can (and should, by principle) add that business logic in without changing anything about the schema.
+
+If we were to request only the inStock information, our service would get an object that looks like this:
+
+```typescript
+{ __typename: "Product", upc: "1" }
+```
+
+All this means is that we need our gateway to send data of this shape to us.
+
+Because we want to have higher confidence in our tests. This time around we will not manually specify it and let the test tool do it for us. If this kind of test passes, and the sum of our schemas, including the schema of the service under test, also passes validation, you can — and probably should, in line with a CI/CD spirit — confidently deploy.
+
+But, our test is not passing yet. Let’s make that happen. *executeGraphql *function takes a mocks property as an argument. Mocks should be an object that as keys have the names of the types you want to mock. The value for those keys should be a function that returns an object that will pinpoint the values we care about.
+
+```typescript
+it("should be 0 for an item with a price over 1000", async () => {
+  const mocks = { Product: () => ({ price: 1001 }) };
+
+  const result = await executeGraphql({ query, service, mocks });
+
+  expect(result.data._getProduct.shippingEstimate).toStrictEqual(0);
+});
+```
+
+We don’t have to set up anything we do NOT care about — like weight or upc in this case.
+
+Try to make the second test pass yourself.
+
+This is how it could look like:
+
+```typescript
+it("should be calculated as 1 dollar per 2 pounds for an item with a price of 1000 or below", async () => {
+  const mocks = { Product: () => ({ price: 999, weight: 100 }) };
+
+  const result = await executeGraphql({ query, service, mocks });
+
+  expect(result.data._getProduct.shippingEstimate).toEqual(50);
+});
+```
+
+‍`‍`
+
+We had to add weight this time around and changed the price.
+
+So, all great! Clean, simple.
+
+But. You might remember that I mentioned that the first test I showed you, the _“getEntities.test.js”_ one, had a fundamental problem to it. We just stumbled upon the same problem here, which we will tackle in the following section.
+
+## 4. Separation of concerns
+
+This section has nothing to do with the testing tool I’m introducing, so if that’s all you care about and you can’t wait to try it out, by all means — go to [federation-testing tool](http://github.com/TheBrainFamily/federation-testing-tool?ref=xolvio.ghost.io) and start testing away!
+
+But, if I still have the attention of some of you — I would like to address one more thing. Right now our tests can fail for multiple unrelated reasons. You might change your schema, or you might break your business logic, programmed in the resolver. In both cases, the same test will fail. That’s never good. The best tests are the ones that make it trivial to determine what went wrong when you see them fail.
+
+Keeping business logic inside your GraphQL layer has another disadvantage. What if you wanted to expose an endpoint to tell a shippingEstimate based on a passed price and weight? What if you wanted to have a CLI utility that could answer the same question? Maybe you want a cron job that counts all items that are inStock and reacts to low quantities with some kind of an alert?
+
+Let’s see what we can do to separate the concerns of GraphQL configuration from our  business logic.
+
+We want to have a separate estimateShipping function that will take an object argument with weight and price. In the spirit of TDD we will first specify how we want to use it, and only then implement it. My mocking tool of choice is the fantastic TestDouble.js by [Justin Searls](https://medium.com/u/5af30eb2c20d?ref=xolvio.ghost.io) (of which he was nice enough to make me one of the maintainers recently — full disclosure :-) ), let’s install, configure and put it to use.
+
+```typescript
+npm install --save-dev testdouble testdouble-jest
+```
+
+First, we need to add these two lines at the top of our test. _In a real-life situation, you could do this in a helper file and import td from it, or make it global._
+
+```typescript
+// Put these two lines at the top of inventory.test.js
+const td = require("testdouble");
+require("testdouble-jest")(td, jest);
+```
+
+Now, let’s create a testdouble for the estimateShipping function, by td.replacing it. Make sure you put it ABOVE the line that requires resolvers, otherwise, they will get required with the original file, instead of the replaced one: `‍`
+
+```typescript
+const td = require("testdouble");
+require("testdouble-jest")(td, jest);
+const { gql } = require("apollo-server");
+const { executeGraphql } = require("federation-testing-tool");
+
+// This is the added line! Make sure it's above the line that requires resolvers.
+const { estimateShipping } = td.replace("./estimateShipping");
+//
+
+const { typeDefs } = require("./typeDefs");
+const { resolvers } = require("./resolvers");
+const service = { typeDefs, resolvers };
+```
+
+Now, we need the barebones of the function, so we actually have something to replace:
+
+```typescript
+exports.estimateShipping = ({ price, weight }) => {};
+```
+
+Now we change our tests a bit. Remove both of them (leave the query!) and let’s start from scratch:
+
+```typescript
+it("should be calculated with estimateShipping based on the price and weight", async () => {
+  const PRICE = 999;
+  const WEIGHT = 100;
+  const mocks = { Product: () => ({ price: PRICE, weight: WEIGHT }) };
+
+  td.when(estimateShipping({ price: PRICE, weight: WEIGHT })).thenReturn(99);
+
+  const result = await executeGraphql({
+    query,
+    service,
+    mocks,
+  });
+
+  expect(result.data._getProduct.shippingEstimate).toEqual(99);
+});
+```
+
+This test seems very similar, but now we don’t verify the business logic, we check whether the GraphQL configuration of schema and resolvers match together and whether we deal with the data we get from the gateway in the correct way — in our case — whether we pass it to the estimateShipping function correctly.
+
+At this moment the test will fail because we don’t use the estimateShipping function in the resolvers yet. Let’s change that. We need to require our function and then plug it into the shippingEstimate resolver, like so:
+
+```typescript
+//Remember to add this require
+const { estimateShipping } = require("./estimateShipping");
+
+exports.resolvers = {
+  Product: {
+    __resolveReference(object) {
+      return {
+        ...object,
+        ...inventory.find((product) => product.upc === object.upc),
+      };
+    },
+    // This is where we make changes
+    shippingEstimate: (object) =>
+      estimateShipping({
+        price: object.price,
+        weight: object.weight,
+      }),
+  },
+};
+```
+
+Run the tests, and you should see a beautiful, green pass. :-)
+
+Now, we can add a specification for the estimateShipping function. The scaffolding will look strangely familiar:
+
+```typescript
+const { estimateShipping } = require("./estimateShipping");
+
+test.todo("estimateShipping should be 0 for an item with a price over 1000");
+test.todo("estimateShipping should be calculated as 1 dollar per 2 pounds for an item with a price of 1000 or below");
+```
+
+It should be clear by now that the specification we’ve used before for testing GraphQL wasn’t really about GraphQL — looking at the specification we prepared here. Now, all that’s left is a trivial TDD exercise. Let’s start with the first part of the specification:`‍`
+
+```typescript
+test("estimateShipping should be 0 for an item with a price over 1000", () => {
+  expect(estimateShipping({ price: 1001 })).toStrictEqual(0);
+});
+```
+
+Run the test, make sure it fails. Now make it pass:
+
+```typescript
+exports.estimateShipping = ({ price, weight }) => {
+  if (price > 1000) {
+    return 0;
+  }
+};
+```
+
+The second part of the specification:
+
+```typescript
+test("estimateShipping should be calculated as 1 dollar per 2 pounds for an item with a price of 1000 or below", () => {
+  expect(estimateShipping({ price: 1000, weight: 500 })).toEqual(250);
+});
+```
+
+Run the test, make sure it fails. Now make it pass:
+
+```typescript
+exports.estimateShipping = ({ price, weight }) => {
+  if (price > 1000) {
+    return 0;
+  }
+  return weight / 2;
+};
+```
+
+That’s all! You can see the code at this stage here: [https://github.com/TheBrainFamily/testable-federation-demo/tree/step-3](https://github.com/TheBrainFamily/testable-federation-demo/tree/step-3?ref=xolvio.ghost.io)
+
+You can start everything now and there is a very high chance things should be working properly. One of the things that could NOT work properly — there is a chance that the definition of your estimateShipping function doesn’t match what you testdoubled. You could define your function as taking an object with a _weight_ key, instead of _weight_, but your testdouble and resolvers are referencing _weight _— all tests will pass, but the service will fail runtime. What can we do here?
+
+There are a few options.
+
+The first is simply to not care. This kind of a bug should be spotted in code review, pair programming, or during a sanity test, either on staging env or by the developer making changes around that piece of code — he/she should do one manual verification at the end anyway, right? :) Once someone verified all is connected properly, the chance of introducing a breaking typo change like that is small — and the return of investment for making sure we avoid that kind of a typo is small as well, especially if we have to bend over backward to avoid it.
+
+Another strategy is to use TypeScript (or Flow) — and this is my preferred way to go in a bigger project, but I will have to leave this for another article.
+
+Yet another strategy (that could be combined with static types for even greater confidence) yet is to program in a wider integration test — that goes all the way through. In this case — I guess why not? Adding this test would be simple (we could have basically used one of the tests we’ve started with).
+
+Two downsides though:
+
+1. It will introduce redundant coverage. When your logic about the shippingEstimate changes, you will have to adjust the integration test as well. With a trivial example like we are working with here, that wouldn’t be too bad. But in large, real-life applications, situations like that are annoying, especially when it’s not clear right away why tests, seemingly not related to your changes, start to break.
+
+2. If your code is anything like real-life code would be, many of the queries will end up hitting some kind of a data store — be it a database or another service. If you write a test that relies on going all the way through — that might be messy to code, slow to run, and, again, expensive to maintain. Make a layered architecture, GraphQL(/Rest/CLI/whatever) -> Service (which includes all business logic and doesn’t deal with storing or fetching the data) -> Repository, and you can test all the chunks in separation with speed and very high, although not 100%, confidence. Yes, you could make a test that has a mock on the very last layer — the one that has to actually request the data (easy to do with a nock, for example), or an in-memory DB. In some cases it’s the right way to go, assuming you keep the proper architecture, separation of concerns, and limit the number of tests that verify everything up to the IO.
+
+All in all, it’s an equation of gains and losses. The proper strategy will depend on a project you work on, the resources you have available, and even the particular feature you work on. A feature that allows the user to pay for an item in a basket is crucial to the company staying alive  — and you might want to automate the testing around it as much as possible, have linting, static typing, end-to-end tests, manual verification, and so on. But an ability to add/display an emoji reaction to a review? Not necessarily. If things go wrong, someone will probably notice and let us know soon enough anyway, and if you are introducing the feature as an experiment, wanting to get it out of the door as quickly as possible, you might want to skip some of the upfront costs.
+
+There is more to the federation-testing-tool —  the ability to pass the context to the resolvers (e.g. to test data sources), ability to test an actual integration between multiple services. I hope to get some feedback from you about the additional features that might be helpful.
+
+I’ve been working on testing tooling for a few years now, and always wanted to start sharing my experience in writing. My focus circles around testing in general, React and GraphQL/Apollo in particular.  If you liked this article, I’d appreciate a few claps, a follow on Twitter [Lukasz Gandecki](https://medium.com/u/ad5f2253c98a?ref=xolvio.ghost.io) to hear about the next articles, and if you have a moment to spare, maybe some feedback, here, or in the federation-testing-tool repo.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

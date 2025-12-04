@@ -1,0 +1,84 @@
+---
+title: "Apollo Composable with Vue Storybook Stories"
+publishedAt: "2020-09-11"
+summary: "One day you might decide your app became so large that it would be great to develop smaller chunks of it in isolation"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff8cbddd07492f0cd9e7dd_quino-al-j-vgwo8di98-unsplash.webp"
+---
+
+When you first add Apollo to your Vue app using composition API you probably end up with code similar to this one:
+
+```typescript
+const apolloClient = new ApolloClient({
+  uri: 'https://example.com/graphql'
+})
+
+const app = new Vue({
+  setup() {
+    provide(DefaultApolloClient, apolloClient);
+  },
+  render: h => h(App)
+})
+```
+
+One day you might decide your app became so large that it would be great to develop smaller chunks of it in isolation, storybook seems a perfect fit, but when you try running it you get this beauty:
+
+![](https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff8c44d3821a0a47ed9070_image.png)
+
+This happens because your app configuration is ignored by storybook.
+
+Let's create a wrapper that will provide the Apollo Client for our story:`‍`
+
+```typescript
+<template>
+  <div><slot/></div>
+</template>
+
+<script>
+
+import {defineComponent, provide} from "@vue/composition-api";
+import {DefaultApolloClient} from "@vue/apollo-composable";
+import ApolloClient from "apollo-boost";
+
+const apolloClient = new ApolloClient({
+  uri: 'http://localhost:4000/graphql'
+})
+
+export default defineComponent({
+  setup() {
+    provide(DefaultApolloClient, apolloClient);
+  }}
+)
+
+</script>
+```
+
+**ApolloWrapper.vue**
+
+Now you can make a story that looks like this:`‍`
+
+```typescript
+import Page from "./Page";
+import ApolloWrapper from "./ApolloWrapper";
+
+export default {
+  title: 'Example/Page',
+  component: Page,
+};
+
+const Template = (args, { argTypes }) => ({
+  props: Object.keys(argTypes),
+  components: { ApolloWrapper, Page },
+  template: '',
+});
+
+export const Primary = Template.bind({});
+```
+
+**Page.stories.js**
+
+[Take a look at a working example here
+‍](https://github.com/xolvio/apollo-composable-with-vue-stories-demo?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

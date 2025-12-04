@@ -1,0 +1,90 @@
+---
+title: "For loops in JavaScript (vs _.times)"
+publishedAt: "2021-06-29"
+summary: "From time to time I still see a for loop in JavaScript codebases. Linters are frequently angry about them."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9e0e5656628fbccb0163_tine-ivanic-u2d0BPZFXOY-unsplash.webp"
+---
+
+You can watch me go through this topic here:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=e26VlbpXhxE)
+
+From time to time I still see a for loop in JavaScript codebases. Linters are frequently angry about them.
+There are use-cases, like async operations that have to happen in order, that are an exception to this rule and provide a good excuse to use eslint-disable comment.
+Nonetheless, in most cases there is usually a more human-readable way of looping. If you need to iterate over an array most developers intuitively reach for .map .forEach .reduce and so on. But when they want to iterate a number of times, a lot of them still default to a for loop.
+
+To give an example, let's assume we want a function that will create a number of some kind of an object. This might be a part of data initialization, or maybe part of a test-util.
+We could define it like so:
+
+```typescript
+expect(createObjects(2)).toEqual([{ id: 0 }, { id: 1 }]);
+expect(createObjects(3)).toEqual([{ id: 0 }, { id: 1 }, { id: 2 }]);
+```
+
+and implement it like so:
+
+```typescript
+const createObjects = (howMany: number) => {
+  const results = [];
+  for (let i = 0; i < howMany; i += 1) {
+    results.push({ id: i });
+  }
+  return results;
+};
+```
+
+It seems fine, but there is a few things to track and setup. You create an empty array that you need to mutate and then return. You need to setup the loop itself - make sure the increment is done correctly, and that the edge condition is handled correctly as well. All in all - the noise to signal ratio is high.
+
+Let's see how we could do this with times function:
+
+```typescript
+const createObjectsTimes = (howMany: number) =>  
+  times(howMany, (i) => ({ id: i }));
+```
+
+This code gets straight to the point - the only thing you need to worry about is the logic for what should be the shape of the object. Obviously this is a simplified example but you can imagine that maybe you would generate some randomized data, or maybe you would create some based on the index:
+
+```typescript
+times(howMany, (i) => ({ id: i, isActive: i % 2 === 0 }));
+```
+
+You might also need to call an external function, or maybe even perform an async operation. You might need to actually create an array and maybe push to it as well, at this point you have to start differentiating between two variables that point to two different arrays. The amount of code will start increasing but it's better if it's not nested with old-school clunky for loop.
+
+Some people are hesitant using external tooling like underscore/lodash. They usually worry about increasing the build size.
+In my opinion this should be a very rare concern - if you are building an application the maintenance cost should usually be a much bigger concern than a few kbs here or there.
+
+A good example where it might be worth to NOT use any external dependencies are lambda functions.
+It's significantly easier to set them up, debug, update if you only use nodejs and aws-sdk APIs. If your function is just tens of lines of code (or sometimes even less than that), it might be a good idea to start with self-contained module.
+
+In that case you could easily build your own version of times, for example:
+
+```typescript
+const myTimes = <TResult>(
+  howMany: number,
+  cb: (i: number) => TResult
+): TResult[] =>
+  new Array(howMany)
+    .fill(1)
+    .map((_, i) => i)
+    .map(cb);
+```
+
+or even smaller with pure-js (which you might end up using to skip build step altogether):
+
+```typescript
+const myTimes = (howMany, cb) =>  
+  new Array(howMany)  
+  .fill(1)  
+  .map((_, i) => i)  
+  .map(cb);
+```
+
+‍
+
+This decision is worth putting under constant evaluation - things almost always start small, but frequently turn much bigger. Once you start adding more and more handcrafted helpers, or even just a couple but very complex ones, consider adding a build and bundle step. Something like our own [https://github.com/xolvio/cdk-typescript-tooling](https://github.com/xolvio/cdk-typescript-tooling?ref=xolvio.ghost.io) takes care of a lot of issues related to those steps. It will also treeshake the code so your final bundle should not increase that much in size.
+
+Thanks!
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

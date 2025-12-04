@@ -1,0 +1,87 @@
+---
+title: "How to easily develop and deploy TypeScript Lambda functions"
+publishedAt: "2020-11-20"
+summary: "We wanted the TypeScript Lambda experience to be seamless - if a developer wants to create a new function, he should create a typescript file, add it to CDK and that's it."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff90024194789891cbf701_drew-coffman-DzIt-fTYv4E-unsplash.webp"
+---
+
+## Introducing CDK TypeScript resource
+
+### Why?
+
+All-TypeScript codebase including infrastructure as a code with CDK and application code is a pleasure to use.
+Deployment of it, not so much.
+
+You can transpile your code to a new directory, copy package.json there, install production dependencies, and then have CDK send that whole folder to lambda. It's painful to set up, and it will bring a ton of unnecessary code (everything in node_modules) along.
+Webpack is better - it can take an entry point and create a small bundled file that includes only what you need.
+Unfortunately, no one likes to set up complex and diverging webpack configurations, especially in a monorepo with tens if not hundreds of tiny packages.
+
+### What?
+
+We wanted the TypeScript Lambda experience to be seamless - if a developer wants to create a new function, he should create a typescript file, add it to CDK and that's it. Now you can do it like so:
+
+```typescript
+import { TypeScriptFunction } from "cdk-typescript-tooling";
+// ...
+const statusHandle = new TypeScriptFunction(scope, "Purchase-Status-Endpoint", {
+  entry: require.resolve("@sales/purchase-endpoint/src/handler.ts"),
+});
+```
+
+It takes all the parameters that you know from [@aws-cdk/aws-lambda](https://docs.aws.amazon.com/cdk/api/latest/docs/aws-lambda-readme.html?ref=xolvio.ghost.io), like `runtime`, `environment`, `timeout`, and so on, because we extend it.
+
+## Expose easily through HTTP
+
+### Why?
+
+In our development exposing lambdas through http is a very frequent case. The code around it for most cases stays exactly the same and increases the noise.
+We define the function:
+
+```typescript
+const handler = new TypeScriptFunction(stack, "Add-Function", {
+  entry: require.resolve("@calculator/add/src/handler.ts"),
+});
+```
+
+Add HttpApi using LambdaProxyIntegration
+
+```typescript
+const statusApi = new apiGateway2.HttpApi(stack, "PurchaseStatusHttpApi", {
+  defaultIntegration: new apiGateway2Integrations.LambdaProxyIntegration({
+    handler,
+  }),
+});
+```
+
+Add the url to CfnOutput to, among others, see the url in CI/CD logs.
+
+```typescript
+new CfnOutput(stack, "addUrl", {
+  value: statusApi.url,
+});
+```
+
+### What?
+
+Define your function with `withHttp` option like so:
+
+```typescript
+new TypeScriptFunction(stack, "Add-Function", {
+  entry: require.resolve("@calculator/add/src/handler.ts"),
+  withHttp: true,
+});
+```
+
+...and the other two steps will be done for you automatically.
+
+You can watch me build an example using the TypeScriptFunction from cdk-typescript-tooling here:
+
+[Watch on YouTube](https://www.youtube.com/watch?v=WGgb2TtbUYs)
+
+[The code source created while recording that video is here](https://github.com/xolvio/cdk-typescript-tooling-example-live?ref=xolvio.ghost.io)
+
+[The package is available here](https://www.npmjs.com/package/cdk-typescript-tooling?ref=xolvio.ghost.io)
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

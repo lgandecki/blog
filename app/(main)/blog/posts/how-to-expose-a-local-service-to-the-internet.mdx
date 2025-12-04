@@ -1,0 +1,33 @@
+---
+title: "How to expose a local service to the internet"
+publishedAt: "2021-07-17"
+summary: "From time to time you might need to expose your locally running service to the external world"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9c3b8b9417689362d560_faye-cornish-n3XTxxV7qhI-unsplash.webp"
+---
+
+From time to time you might need to expose your locally running service to the external world - for example you might want to test a webhook that calls your service. To speed up the test/development feedback loop it would be great to be able to point that webhook to your local machine. Unfortunately local machines hardly ever have externally accessible ipv4 (sadly there is just not enough of those available).
+
+There is a simple solution.
+Install nodejs package localtunnel:
+
+```typescript
+npm install -g localtunnel
+```
+
+and then run it, specifying what port do you want to be exposed:
+
+```
+
+```
+
+It will say something like this:
+
+```typescript
+your url is: https://ancient-cat-90.loca.lt
+```
+
+localtunnel is very simple and will probably work great in most one-off simple cases. Huge advantage of it is that you don't need to create an account, mess with tokens, etc. If you need something more advanced I'd recommend looking at [ngrok](https://ngrok.com/?ref=xolvio.ghost.io) . Ngrok allows you to see a dashboard with a preview of all incoming traffic, set custom domains, and much more.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

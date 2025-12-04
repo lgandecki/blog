@@ -1,0 +1,36 @@
+---
+title: "Chimp 4.0 - resolvers for extended federated types"
+publishedAt: "2021-04-06"
+summary: "We've noticed that resolver was frequently unused and left a significant amount of unnecessary code in projects"
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66fff7adf95ec0e1b50db7e8_marek-okon-IRFlQcOeOZw-unsplash.webp"
+---
+
+The Chimp 3.0 and previous versions always generated resolveReferences resolvers for all federated types - the types that were annotated with `@key`, like so:
+
+```typescript
+extend type SomeFederatedType @key(fields: "uuid") { }
+
+Add @compute now to it to keep the previous functionality:
+
+make sure your chimp-graphql-codegen-plugin version dependency is at least 0.2.0
+```
+
+‍
+
+We've noticed that that resolver was frequently unused and left a significant amount of unnecessary code in projects (resolvers + tests).
+
+If you want to keep the previous functionality, mark all federated types with @compute.
+
+```typescript
+extend type SomeFederatedType @key(fields: "uuid") @computed { }
+```
+
+‍
+
+If you do have unnecessary files produced by previous versions of chimp you can remove them now safely.
+
+Make sure your chimp-graphql-codegen-plugin version dependency is at least 0.2.0, otherwise the codegen tool will complain that you are using the `@computed` directive incorrectly.
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍

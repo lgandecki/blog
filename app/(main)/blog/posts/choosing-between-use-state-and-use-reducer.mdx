@@ -1,0 +1,195 @@
+---
+title: "Choosing between useState and useReducer"
+publishedAt: "2021-03-18"
+summary: "Watch me go through the advantages and disadvantages of different ways of using hooks for dealing with state in React."
+heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa3c79a10f57c14653a9e_vinicius-amnx-amano-IPemgbj9aDY-unsplash.webp"
+---
+
+This is one of the things that you should see with your eyes, so I'd recommend watching me go through the advantages and disadvantages of different ways of using hooks for dealing with state in React.
+
+[Watch on YouTube](https://www.youtube.com/watch?v=UjpKJi83pPM)
+
+I start with useState, show a bug in the below code, then refactor to useReducer, add redux/toolkit to it, and then finally refactor to "use-complex-state". I'm leaving the source code here, so you can play around with it:
+
+```typescript
+function App() {
+  const [counter, setCount] = useState(0);
+  return (
+    <div className="App">
+      <header className="App-header">
+        {counter}
+        <div
+          onClick={() => {
+            console.log("2 points");
+            setCount(counter + 2);
+          }}
+        >
+          2 points!
+          <button
+            onClick={() => {
+              console.log("1 point");
+              setCount(counter + 1);
+            }}
+          >
+            1 point
+          </button>
+        </div>
+      </header>
+    </div>
+  );
+}
+```
+
+**useState with a bug**
+
+```typescript
+const initialState = { counter: 0 };
+
+function reducer(
+  state = initialState,
+  action: { type: string; payload?: any }
+) {
+  switch (action.type) {
+    case "increment":
+      return { counter: state.counter + 1 };
+    case "incrementBy":
+      return { counter: state.counter + action.payload };
+    default:
+      throw new Error();
+  }
+}
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  return (
+    <div className="App">
+      <header className="App-header">
+        {state.counter}
+        <div
+          className="Points"
+          onClick={() => {
+            console.log("div clicked add two points payload");
+            dispatch({ type: "incrementBy", payload: 2 });
+          }}
+        >
+          <br />
+          <button
+            onClick={() => {
+              console.log("button clicked add one point payload");
+              dispatch({ type: "increment" });
+            }}
+          >
+            1 point
+          </button>
+        </div>
+      </header>
+    </div>
+  );
+}
+```
+
+**useReducer - everything works, but verbose code**
+
+```typescript
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+const initialState = { count: 0 };
+
+const {
+  actions: { increment, incrementByTwo },
+  reducer,
+} = createSlice({
+  name: "counter",
+  initialState,
+  reducers: {
+    increment: (state) => {
+      state.count += 1;
+    },
+    incrementBy: (state, action: PayloadAction<number>) => {
+      state.count += action.payload;
+    },
+  },
+});
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        {state.count}
+        <div
+          onClick={() => {
+            dispatch(incrementBy(2));
+          }}
+        >
+          2 points!
+          <button
+            onClick={() => {
+              dispatch(increment());
+            }}
+          >
+            1 point
+          </button>
+        </div>
+      </header>
+    </div>
+  );
+}
+```
+
+**useReducer with Redux Toolkit**
+
+```typescript
+import { PayloadAction } from "@reduxjs/toolkit";
+import { useComplexState } from "use-complex-state";
+import "./App.css";
+
+const initialState = { count: 0 };
+
+export default function App() {
+  const [state, { incrementBy, increment }] = useComplexState({
+    initialState,
+    reducers: {
+      increment: (state) => {
+        state.count += 1;
+      },
+      incrementBy: (state, action: PayloadAction<number>) => {
+        state.count += action.payload;
+      },
+    },
+  });
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        {state.count}
+        <div
+          className="Points"
+          onClick={() => {
+            console.log("increment by 2 with complex state");
+            incrementBy(2);
+          }}
+        >
+          2 points!
+          <br />
+          <button
+            onClick={() => {
+              console.log("increment with complex state");
+              increment();
+            }}
+          >
+            1 point
+          </button>
+        </div>
+      </header>
+    </div>
+  );
+}
+```
+
+**useComplexState hook**
+
+Let me know if you have any questions or thoughts in the comments below.
+
+‍
