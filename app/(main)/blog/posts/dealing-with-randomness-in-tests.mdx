@@ -40,7 +40,7 @@ This is nice, and I would definitely advise applying this technique when needed,
 
 If you are thinking about integration tests, or maybe even e2e tests, it won't be trivial to inject a dependency in a similar manner.
 
-Usually, your app might have very few functions that use randomness (the frequent case is an "id generator" - defined once, but used frequently), so it might be helpful to just make them random in production, but non-random in tests, like so:`‍`
+Usually, your app might have very few functions that use randomness (the frequent case is an "id generator" - defined once, but used frequently), so it might be helpful to just make them random in production, but non-random in tests, like so:``
 
 ```typescript
 // sample.ts
@@ -61,9 +61,9 @@ const welcomeUser = (userName) => {
 };
 ```
 
-`‍`
+``
 
-`‍`Note: you can use the same patterns for the dreaded dates :)
+``Note: you can use the same patterns for the dreaded dates :)
 
 ```typescript
 const getCurrentDate = () => 
@@ -114,7 +114,7 @@ const getRandomNumberBetweenZeroAndTen = (
 }
 ```
 
-`‍`And now we can test it nicely:
+``And now we can test it nicely:
 
 ```typescript
 test(`returns a number between 1 and 10 
@@ -137,4 +137,4 @@ For example - If you are dealing with a tiny lambda function without any externa
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+

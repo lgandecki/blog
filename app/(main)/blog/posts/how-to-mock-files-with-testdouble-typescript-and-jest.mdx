@@ -7,7 +7,7 @@ heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff9b4e
 
 ## Why we mock - background story (scroll down to see how and get code example)
 
-Let's assume a structure of two files, first a file with a function that calls a separate function and performs some logic based on the information received. In our case, we will be giving advice based on a fetched number of friends for a given person.`‍`
+Let's assume a structure of two files, first a file with a function that calls a separate function and performs some logic based on the information received. In our case, we will be giving advice based on a fetched number of friends for a given person.``
 
 ```typescript
 import { fetchNumberOfFriendsFor } from "./slow-operation-to-mock";
@@ -21,9 +21,9 @@ export const judgeMe = async (name: string) => {
 };
 ```
 
-`‍`
+``
 
-`‍`
+``
 
 The function that fetches the data does not matter to us, it's been in our system forever, and all we need to know is its API - it takes a name (string) and returns a promise that resolves to a number of friends (Promise<number>). We don't really care whether it takes the data from an external service, a local database or if it is just good at guessing.
 
@@ -42,7 +42,7 @@ export const fetchNumberOfFriendsFor = (name: string): Promise<number> =>
   );
 ```
 
-## `‍`
+## ``
 
 Ok, so the tests are easy:
 
@@ -183,4 +183,4 @@ Here is an example repo with the code: [https://github.com/xolvio/jest-testdoubl
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+

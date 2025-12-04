@@ -1,5 +1,5 @@
 ---
-title: "How to deal with the yarn link \"There's already a package called x registered\" error"
+title: 'How to deal with the yarn link "There''s already a package called x registered" error'
 publishedAt: "2021-03-25"
 summary: "If you work on independent packages (or maybe even open-source npm modules - in which case I salute you!), you probably use the link functionality."
 heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa1018da10a4b42a213a6_jj-ying-PDxYfXVlK2M-unsplash.webp"
@@ -9,11 +9,11 @@ Note: tldr at the end of the article ;)
 
 If you work on independent packages (or maybe even open-source npm modules - in which case I salute you!), you probably use the link functionality. And in that case, from time to time you will hit a really terrible warning  message that looks like this:
 
-```typescript
+```
 warning There's already a package called "x" registered. This command has had no effect. If this command was run in another folder with the same name, the other folder is still linked. Please run yarn unlink in the other folder if you want to register this folder.
 ```
 
-‍
+
 
 This error (which is obscured as a warning, even though it stops the execution of the command) should be probably taught in programming schools as a great example of how NOT TO communicate errors to users. ;-)
 
@@ -25,11 +25,9 @@ The program should:
 
 Since that's not how it works, and the issue has been known for 2 years now ( [https://github.com/yarnpkg/yarn/issues/7054](https://github.com/yarnpkg/yarn/issues/7054?ref=xolvio.ghost.io) ) without any good arguments for keeping things as they are or plans to change it, here comes the solution and also tldr:
 
-```typescript
-# to just remove the link, run:
-rm ~/.config/yarn/link/PACKAGE-NAME / BINARY-NAME
-
-# if you want to play it safe, check where it pointed to first:
+```bash
+# to just remove the link, run (replace PACKAGE-NAME with the actual linked package/binary name):
+rm ~/.config/yarn/link/PACKAGE-NAME
 
 $ ls -l ~/.config/yarn/link/cdk-typescript-tooling
 
@@ -38,13 +36,14 @@ $ ls -l ~/.config/yarn/link/cdk-typescript-tooling
 lrwxr-xr-x  1 lukaszgandecki  staff  59 Mar 25 09:04 /Users/lukaszgandecki/.config/yarn/link/cdk-typescript-tooling -> ../../../../../Volumes/fast/Projects/cdk-typescript-tooling
 ```
 
-*`‍`*For lost googlers, this is another error you might see, the steps and reasoning stay the same:*‍
-*
+*For lost googlers, this is another error you might see, the steps and reasoning stay the same:*
 
-```typescript
+-
+
+```
 There's already a linked binary called "update-typescript-function" in your global Yarn bin.
 ```
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+

@@ -38,7 +38,7 @@ curl --request POST  --url http://localhost:8090/api/lists \
 --data '{"text": "First List"}'
 ```
 
-`‍`
+``
 
 And verify that it was added:
 
@@ -63,7 +63,7 @@ cd list-graphql
 npm install
 ```
 
-`‍`
+``
 
 Now let's install our generator and the apollo-datasource-rest package
 
@@ -72,7 +72,7 @@ npm install --save apollo-datasource-rest
 npm install --save-dev chimp-datasources-generator
 ```
 
-`‍`
+``
 
 ## Generate
 
@@ -104,9 +104,9 @@ extend type Query {
 }
 ```
 
-`‍`
+``
 
-`‍`
+``
 
 **src/Lists.graphql**
 
@@ -205,7 +205,7 @@ test("AddList", async () => {
 });
 ```
 
-`‍`
+``
 
 **src/mutations/AddListMutation.spec.ts**
 
@@ -234,7 +234,7 @@ $ PORT=1234 npm start
 🚀 Server ready at http://localhost:1234/graphql
 ```
 
-`‍`
+``
 
 Let's open the graphql playground and run our query. The combination of tests, types and generated scaffolding gives us very high confidence that things will work as expected.
 
@@ -264,4 +264,4 @@ We've effectively removed the mundane. It's your turn to make the interesting (c
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+
