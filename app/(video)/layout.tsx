@@ -2,7 +2,7 @@ import "../global.css";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { ThemeProvider } from "@/components/theme-provider";
-
+import { Analytics } from "@vercel/analytics/next";
 import { cn } from "@/lib/utils";
 export default function VideoRootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,7 +13,10 @@ export default function VideoRootLayout({ children }: { children: React.ReactNod
     >
       <body className="antialiased bg-background text-foreground overflow-hidden">
         <ThemeProvider disableTransitionOnChange>
-          <main className="fixed inset-0">{children}</main>
+          <main className="fixed inset-0">
+            {children}
+            <Analytics />
+          </main>
         </ThemeProvider>
       </body>
     </html>
