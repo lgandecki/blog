@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 export async function generateStaticParams() {
-  let posts = await getBlogPosts();
+  let posts = getBlogPosts();
 
   return posts.map((post) => ({
     slug: post.slug,
@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   let { slug } = await params;
-  let posts = await getBlogPosts();
+  let posts = getBlogPosts();
   let post = posts.find((post) => post.slug === slug);
   if (!post) {
     return;
@@ -81,7 +81,7 @@ function AuthorMetadata({ date, readingTime }: { date: string; readingTime: numb
 
 export default async function Blog({ params }: { params: Promise<{ slug: string }> }) {
   let { slug } = await params;
-  let posts = await getBlogPosts();
+  let posts = getBlogPosts();
   let post = posts.find((post) => post.slug === slug);
 
   if (!post) {

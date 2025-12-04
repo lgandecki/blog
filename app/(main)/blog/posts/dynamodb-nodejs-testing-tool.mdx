@@ -10,7 +10,7 @@ heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ffa013
 DynamoDB is a fantastic database, but so far it misses a nice abstraction that would make you more confident that the code you write is correct. All those string-based queries and parameters probably make you uncomfortable, especially if you are coming from the easy-land of MongoDB.
 Writing node.js scripts to set tables up and run methods on them quickly gets tiring, without the fantastic workflow that tools like Jest and WallabyJS provide you.
 This tool will allow you to iterate quickly while working with DynamoDB.
-*Take a look at source code with some examples *[*here*](https://github.com/xolvio/dynamodb-testing-tool.git?ref=xolvio.ghost.io)*, or keep reading*
+_Take a look at source code with some examples _[_here_](https://github.com/xolvio/dynamodb-testing-tool.git?ref=xolvio.ghost.io)_, or keep reading_
 
 ## How?
 
@@ -27,11 +27,7 @@ That returns an object that has inside two things - the generated name, document
 
 ```typescript
 import { DynamoDB } from "aws-sdk";
-import {
-  CreatedTable,
-  createTable,
-  generateRandomName,
-} from "dynamodb-testing-tool";
+import { CreatedTable, createTable, generateRandomName } from "dynamodb-testing-tool";
 
 let tableObject: CreatedTable;
 
@@ -53,9 +49,7 @@ describe("Multiple tests do not collide with each other", () => {
       })
       .promise();
 
-    const results = await tableObject.documentClient
-      .scan({ TableName: tableObject.tableName })
-      .promise();
+    const results = await tableObject.documentClient.scan({ TableName: tableObject.tableName }).promise();
 
     expect(results.Items).toHaveLength(1);
     // @ts-ignore
@@ -70,9 +64,7 @@ describe("Multiple tests do not collide with each other", () => {
       })
       .promise();
 
-    const results = await tableObject.documentClient
-      .scan({ TableName: tableObject.tableName })
-      .promise();
+    const results = await tableObject.documentClient.scan({ TableName: tableObject.tableName }).promise();
 
     expect(results.Items).toHaveLength(1);
     // @ts-ignore
@@ -93,8 +85,9 @@ If you work with a small number of items and you are only concerned about testin
 
 ### keepTable
 
-If you want to avoid removing tables altogether, pass {keepTable: true} as an option to createTable function.
+If you want to avoid removing tables altogether, pass `{keepTable: true}` as an option to createTable function.
 That option does two things:
+
 - it prevents the tooling from deleting the table
 - it allows writing operations on the table the first time around (when the table does not exist or is empty)
 - it disables the write operations on the table when the table exists and it has at least one item inside.
@@ -182,5 +175,3 @@ beforeEach(async () => {
 ```
 
 Let me know if you have any questions or thoughts in the comments below.
-
-
