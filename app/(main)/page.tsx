@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
-import { Github, ExternalLink, Mail, Linkedin, Twitter } from "lucide-react";
+import { Github, Mail, Linkedin, Twitter } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YouTubePlayer } from "@/components/youtube-player";
+import { ProjectCarousel } from "@/components/project-carousel";
 import { formatDate, getBlogPosts } from "./blog/utils";
+import { codeProjects } from "./codeProjects";
 
 export const metadata: Metadata = {
   title: "Łukasz Gandecki - AI Engineer",
@@ -14,34 +16,7 @@ export const metadata: Metadata = {
     "Projects and writing from Łukasz Gandecki, an AI engineer focused on knowledge experiences, developer tooling, and scalable systems.",
 };
 
-const codeProjects = [
-  {
-    title: "cypress-cucumber-preprocessor",
-    description: "Run cucumber specs with Cypress.io",
-    downloads: "700k monthly downloads",
-    type: "npm",
-    link: "https://www.npmjs.com/package/cypress-cucumber-preprocessor",
-    tags: ["cypress", "cucumber", "testing"],
-  },
-  {
-    title: "wait-for-expect",
-    description: "Wait for expectation to be true.",
-    downloads: "3.5 mln monthly downloads.",
-    type: "npm",
-    link: "https://www.npmjs.com/package/wait-for-expect",
-    tags: ["tooling", "jest", "testing"],
-  },
-  {
-    title: "modifyjs",
-    description: "Modify your objects with a mongo like syntax.",
-    downloads: "50k monthly downloads",
-    type: "npm",
-    link: "https://www.npmjs.com/package/modifyjs",
-    tags: ["helper", "mongodb"],
-  },
-];
-
-const contactLinks = [
+export const contactLinks = [
   {
     label: "GitHub",
     href: "https://github.com/lgandecki",
@@ -91,44 +66,7 @@ export default async function Page() {
 
       <section id="projects" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
         <h2 className="mb-12 text-3xl font-bold tracking-tight">Open Source &amp; Libraries</h2>
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-          {codeProjects.map((project) => (
-            <Card key={project.title} className="flex h-full flex-col gap-4 p-6 transition-shadow hover:shadow-lg">
-              <div className="flex items-start justify-between">
-                <span className="rounded bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground">
-                  {project.type}
-                </span>
-                <Link
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`Open ${project.title} on ${project.type}`}
-                >
-                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                </Link>
-              </div>
-              <h3 className="text-lg font-semibold">
-                <Link
-                  href={project.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="transition-colors hover:text-accent"
-                >
-                  {project.title}
-                </Link>
-              </h3>
-              <p className="flex-1 text-sm text-muted-foreground">{project.description}</p>
-              <p className="text-sm text-muted-foreground">{project.downloads}</p>
-              <div className="mt-auto flex flex-wrap gap-2 border-t border-dashed border-border pt-4">
-                {project.tags.map((tag) => (
-                  <span key={tag} className="text-xs text-muted-foreground">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            </Card>
-          ))}
-        </div>
+        <ProjectCarousel projects={codeProjects} />
       </section>
 
       <section className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
