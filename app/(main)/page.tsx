@@ -7,8 +7,41 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { ProjectCarousel } from "@/components/project-carousel";
+import { ChromaLogos } from "@/components/chroma-logos";
 import { formatDate, getBlogPosts } from "./blog/utils";
 import { codeProjects } from "./codeProjects";
+
+const companyLogos = [
+  {
+    src: "/assets/2K Games Logo.svg",
+    darkSrc: "/assets/2K Games Logo Dark.svg",
+    alt: "2K Games",
+    width: 60,
+    height: 40,
+    className: "company-logo-2k h-8 w-auto md:h-9",
+  },
+  {
+    src: "/assets/Audi Logo 2016.svg",
+    alt: "Audi",
+    width: 80,
+    height: 28,
+    className: "company-logo h-7 w-auto md:h-8",
+  },
+  {
+    src: "/assets/Wayfair Logo.svg",
+    alt: "Wayfair",
+    width: 100,
+    height: 24,
+    className: "company-logo-wayfair h-6 w-auto md:h-7",
+  },
+  {
+    src: "/assets/Alef.png.webp",
+    alt: "Alef Education",
+    width: 80,
+    height: 32,
+    className: "company-logo relative md:-top-[6px] -top-[4px] h-7 w-auto md:h-9",
+  },
+];
 
 export const metadata: Metadata = {
   title: "Łukasz Gandecki - AI Engineer",
@@ -54,36 +87,7 @@ export default async function Page() {
             <br />
             Specialized in full-stack architecture, Artificial Intelligence, developer tooling.
           </p>
-          <div className="mt-8 mb-0 flex flex-wrap items-center gap-4 opacity-60 md:gap-6">
-            <Image
-              src="/assets/2K Games Logo.svg"
-              alt="2K Games"
-              width={60}
-              height={40}
-              className="company-logo-2k h-8 w-auto md:h-9"
-            />
-            <Image
-              src="/assets/Audi Logo 2016.svg"
-              alt="Audi"
-              width={80}
-              height={28}
-              className="company-logo h-7 w-auto md:h-8"
-            />
-            <Image
-              src="/assets/Wayfair Logo.svg"
-              alt="Wayfair"
-              width={100}
-              height={24}
-              className="company-logo h-6 w-auto md:h-7"
-            />
-            <Image
-              src="/assets/Alef.png.webp"
-              alt="Alef Education"
-              width={80}
-              height={32}
-              className="company-logo relative md:-top-[6px] -top-[4px] h-7 w-auto md:h-9"
-            />
-          </div>
+          <ChromaLogos logos={companyLogos} className="mt-8 mb-0" radius={100} />
         </div>
       </section>
 
