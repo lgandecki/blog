@@ -77,7 +77,7 @@ export const getToolboxTable = (
 const MyTable = getToolboxTable();
 ```
 
-‍`‍`This way we can pass custom tableName and documentClient.
+``This way we can pass custom tableName and documentClient.
 
 Now we are able to use dynamodb-testing-tool to do some testing.
 
@@ -207,7 +207,7 @@ test("Putting and getting a Customer", async () => {
 });
 ```
 
- can add another test, that will use very similar items, with the same (conflicting) id, but different data. Let's tweak the company name:`‍`
+ can add another test, that will use very similar items, with the same (conflicting) id, but different data. Let's tweak the company name:``
 
 ```typescript
 test("Collisions should not be a problem", async () => {
@@ -237,4 +237,4 @@ Green again! :)
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+

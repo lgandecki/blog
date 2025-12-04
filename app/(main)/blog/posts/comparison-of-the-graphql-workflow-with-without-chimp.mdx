@@ -103,7 +103,7 @@ extend type Query {
 }
 ```
 
-`‍`
+``
 
 Now we have to manually create the resolvers file and implement it. I usually copy and paste a small resolvers file from a different module and modify it to the shape I need.
 
@@ -122,7 +122,7 @@ export const echoResolvers = {
 };
 ```
 
-`‍`
+``
 
 **src/Echo/echoResolvers.ts**
 
@@ -139,7 +139,7 @@ export const resolvers = merge(
 );
 ```
 
-`‍`
+``
 
 You can start the app and run the query, it should work exactly the same way.
 
@@ -153,4 +153,4 @@ And speaking of tests - we generate the scaffolds for your tests. Here we didn't
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+

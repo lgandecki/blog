@@ -66,7 +66,7 @@ exports.typeDefs = gql`
 
 **typeDefs.js**
 
-`‍`
+``
 
 ```typescript
 exports.resolvers = {
@@ -398,7 +398,7 @@ it("should be calculated as 1 dollar per 2 pounds for an item with a price of 10
 });
 ```
 
-‍`‍`
+``
 
 We had to add weight this time around and changed the price.
 
@@ -430,7 +430,7 @@ const td = require("testdouble");
 require("testdouble-jest")(td, jest);
 ```
 
-Now, let’s create a testdouble for the estimateShipping function, by td.replacing it. Make sure you put it ABOVE the line that requires resolvers, otherwise, they will get required with the original file, instead of the replaced one: `‍`
+Now, let’s create a testdouble for the estimateShipping function, by td.replacing it. Make sure you put it ABOVE the line that requires resolvers, otherwise, they will get required with the original file, instead of the replaced one: ``
 
 ```typescript
 const td = require("testdouble");
@@ -510,7 +510,7 @@ test.todo("estimateShipping should be 0 for an item with a price over 1000");
 test.todo("estimateShipping should be calculated as 1 dollar per 2 pounds for an item with a price of 1000 or below");
 ```
 
-It should be clear by now that the specification we’ve used before for testing GraphQL wasn’t really about GraphQL — looking at the specification we prepared here. Now, all that’s left is a trivial TDD exercise. Let’s start with the first part of the specification:`‍`
+It should be clear by now that the specification we’ve used before for testing GraphQL wasn’t really about GraphQL — looking at the specification we prepared here. Now, all that’s left is a trivial TDD exercise. Let’s start with the first part of the specification:``
 
 ```typescript
 test("estimateShipping should be 0 for an item with a price over 1000", () => {
@@ -573,4 +573,4 @@ I’ve been working on testing tooling for a few years now, and always wanted to
 
 Let me know if you have any questions or thoughts in the comments below.
 
-‍
+
