@@ -7,7 +7,8 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
-    "generate-blur": "bun scripts/generate-blur.ts"
+    "generate-blur": "bun scripts/generate-blur.ts",
+    "download-hero-images": "bun scripts/download-hero-images.ts"
   },
   "dependencies": {
     "@mdx-js/mdx": "^3.0.1",
@@ -18,7 +19,7 @@
     "@types/node": "20.11.17",
     "@types/react": "18.2.55",
     "@types/react-dom": "18.2.19",
-    "@vercel/analytics": "^1.1.3",
+    "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.0.9",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
