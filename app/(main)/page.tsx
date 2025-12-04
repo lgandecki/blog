@@ -40,7 +40,7 @@ export const contactLinks = [
 ];
 
 export default async function Page() {
-  let posts = (await getBlogPosts())
+  let posts = getBlogPosts()
     .sort((a, b) => new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime())
     .slice(0, 3);
 

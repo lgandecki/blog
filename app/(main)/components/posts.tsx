@@ -125,7 +125,7 @@ function MobileCard({ post }: { post: BlogPost }) {
 }
 
 export async function BlogPosts() {
-  let posts = (await getBlogPosts()).sort(
+  let posts = getBlogPosts().sort(
     (a, b) => new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime()
   );
 

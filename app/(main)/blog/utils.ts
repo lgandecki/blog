@@ -1,6 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import { getPlaiceholder } from 'plaiceholder'
 
 type Metadata = {
   title: string
@@ -36,11 +35,11 @@ function parseFrontmatter(fileContent: string) {
   return { metadata: metadata as Metadata, content }
 }
 
-function getMDXFiles(dir) {
+function getMDXFiles(dir: string) {
   return fs.readdirSync(dir).filter((file) => path.extname(file) === '.mdx')
 }
 
-function readMDXFile(filePath) {
+function readMDXFile(filePath: string) {
   let rawContent = fs.readFileSync(filePath, 'utf-8')
   return parseFrontmatter(rawContent)
 }
@@ -51,44 +50,33 @@ function calculateReadingTime(content: string): number {
   return Math.max(1, Math.ceil(words / wordsPerMinute))
 }
 
-async function getBlurDataURL(imageUrl: string): Promise<string | undefined> {
-  try {
-    const response = await fetch(imageUrl)
-    if (!response.ok) return undefined
-    const buffer = await response.arrayBuffer()
-    const { base64 } = await getPlaiceholder(Buffer.from(buffer))
-    return base64
-  } catch {
-    return undefined
+function readBlurFile(dir: string, slug: string): string | undefined {
+  const blurPath = path.join(dir, `${slug}.blur`)
+  if (fs.existsSync(blurPath)) {
+    return fs.readFileSync(blurPath, 'utf-8').trim()
   }
+  return undefined
 }
 
-async function getMDXData(dir): Promise<BlogPost[]> {
+function getMDXData(dir: string): BlogPost[] {
   let mdxFiles = getMDXFiles(dir)
-  const posts = await Promise.all(
-    mdxFiles.map(async (file) => {
-      let { metadata, content } = readMDXFile(path.join(dir, file))
-      let slug = path.basename(file, path.extname(file))
-      let readingTime = calculateReadingTime(content)
-      let heroImageBlur: string | undefined
+  return mdxFiles.map((file) => {
+    let { metadata, content } = readMDXFile(path.join(dir, file))
+    let slug = path.basename(file, path.extname(file))
+    let readingTime = calculateReadingTime(content)
+    let heroImageBlur = readBlurFile(dir, slug)
 
-      if (metadata.heroImage) {
-        heroImageBlur = await getBlurDataURL(metadata.heroImage)
-      }
-
-      return {
-        metadata,
-        slug,
-        content,
-        readingTime,
-        heroImageBlur,
-      }
-    })
-  )
-  return posts
+    return {
+      metadata,
+      slug,
+      content,
+      readingTime,
+      heroImageBlur,
+    }
+  })
 }
 
-export async function getBlogPosts(): Promise<BlogPost[]> {
+export function getBlogPosts(): BlogPost[] {
   return getMDXData(path.join(process.cwd(), 'app', '(main)', 'blog', 'posts'))
 }
 
