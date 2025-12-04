@@ -337,6 +337,17 @@ table {
   padding-bottom: 0.5rem;
   user-select: none;
   -webkit-user-select: none;
+  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+}
+
+@media (max-width: 640px) {
+  .project-carousel {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
 }
 
 .project-carousel::-webkit-scrollbar {
