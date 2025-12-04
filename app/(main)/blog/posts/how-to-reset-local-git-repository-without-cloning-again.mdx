@@ -1,5 +1,5 @@
 ---
-title: "\"Works on my machine\" / how to reset your local git repository without cloning again."
+title: '"Works on my machine" / how to reset your local git repository without cloning again.'
 publishedAt: "2020-08-21"
 summary: "Remove all untracked/ignored files and directories excluding .idea and .vscode folders, list things to remove, and ask for confirmation first."
 heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff98e53e1ce13089bd6ced_jose-antonio-gallego-vazquez-HQpzT47S7Vo-unsplash.webp"
@@ -7,7 +7,7 @@ heroImage: "https://cdn.prod.website-files.com/66d9c8ce74a4739309e271dd/66ff98e5
 
 Tldr: Remove all untracked/ignored files and directories excluding .idea and .vscode folders, list things to remove, and ask for confirmation first:
 
-```typescript
+```bash
 git clean -x -d -n -e .idea -e .vscode | awk '{print $3}' | xargs -p rm -rf
 ```
 
@@ -25,23 +25,23 @@ Behold - there is no need for that madness. Let's clean the existing repo in pla
 
 Try:
 
-```typescript
+```bash
 git clean -x -d -n
 ```
 
 It should show something like:
 
-```typescript
+```bash
 Would remove dist/
 Would remove node_modules/
 Would remove .idea/
 ```
 
-*Note: -x considers ignored files as well, -d removes whole ignored/untracked directories*
+_Note: -x considers ignored files as well, -d removes whole ignored/untracked directories_
 
 If you are fine with the list, remove the -n (dry run), add -f (force):
 
-```typescript
+```bash
 git clean -x -d -f
 ```
 
@@ -51,7 +51,7 @@ How about if you see something in the list you don't want to remove. In my case 
 
 Use -e for that:
 
-```typescript
+```bash
 git clean -x -d -n -e .idea
 ```
 
@@ -59,19 +59,19 @@ What's a bit annoying though now is that you have to keep switching between the 
 
 We can pipe the result of the git clean command to awk to get the path to a file/directory that would get removed:
 
-```typescript
+```bash
 git clean -x -d -n -e .idea -e node_modules | awk '{print $3}'
 ```
 
 From there, we can pipe it to xargs to pass the paths as arguments to rm utility, we use -p xargs flag to have it ask for confirmation before deleting anything:
 
-```typescript
+```bash
 git clean -x -d -n -e .idea | awk '{print $3}'  | xargs -p rm -rf
 ```
 
 It should show something like:
 
-```typescript
+```bash
 rm -rf dist/ hello node_modules/?...
 ```
 
@@ -81,15 +81,15 @@ Press "y" and enter to execute the echoed command.
 
 If you are like me and find yourself using this command frequently, it might be helpful to alias it:
 
-```typescript
+```bash
 git config --global alias.reset-repo "! git clean -x -d -n -e .idea | awk '{print \$3}' | xargs -p rm -rf"
 ```
 
-*Note the \ before $ sign. Also, if you don't use jetbrains IDE - either remove the -e .idea or change it to something that might be useful to you.*
+_Note the \ before $ sign. Also, if you don't use jetbrains IDE - either remove the -e .idea or change it to something that might be useful to you._
 
 Now, whenever you need to do some serious cleaning run:
 
-```typescript
+```bash
 git reset-repo
 ```
 
@@ -100,5 +100,3 @@ Thanks!
 Łukasz
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

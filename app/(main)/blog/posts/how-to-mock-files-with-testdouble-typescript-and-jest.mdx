@@ -21,11 +21,7 @@ export const judgeMe = async (name: string) => {
 };
 ```
 
-``
-
-``
-
-The function that fetches the data does not matter to us, it's been in our system forever, and all we need to know is its API - it takes a name (string) and returns a promise that resolves to a number of friends (Promise<number>). We don't really care whether it takes the data from an external service, a local database or if it is just good at guessing.
+The function that fetches the data does not matter to us, it's been in our system forever, and all we need to know is its API - it takes a name (string) and returns a promise that resolves to a number of friends (`Promise<number>`). We don't really care whether it takes the data from an external service, a local database or if it is just good at guessing.
 
 But, currently, without learning the details of it, we can't test our function. So in our frustration we dive in and see this:
 
@@ -77,13 +73,13 @@ Change jobs, or, better - use testdouble. It will allow us to write an integrati
 TestDouble has a beautiful syntax for defining the behavior. Let's say we want to make sure that when the fetchNumberOfFriendsFor function is called with a name we pass ("Name") to it, it returns  some number (5). We just do:
 
 ```typescript
-clipboard
+td.when(fetchNumberOfFriendsFor("name")).thenResolve(5);
 ```
 
 Then when someone calls
 
 ```typescript
-fetchNumberOfFriendsFor("name")
+fetchNumberOfFriendsFor("name");
 ```
 
 it will resolve to 5.
@@ -97,7 +93,7 @@ What is this function then, can you just pass anything to td.when() and it makes
 Testdouble documentation shows you a pattern that does this:
 
 ```typescript
-const {fetchNumberOfFriendsFor} = td.replace('./slow-operation-to-mock')  
+const { fetchNumberOfFriendsFor } = td.replace("./slow-operation-to-mock");
 const { judgeMe } = require("./module-under-test");
 ```
 
@@ -111,10 +107,10 @@ So you can basically write test like this:
 import * as td from "testdouble";
 
 test("happy scenario", async () => {
-  const {fetchNumberOfFriendsFor} = td.replace('./slow-operation-to-mock')
+  const { fetchNumberOfFriendsFor } = td.replace("./slow-operation-to-mock");
   const { judgeMe } = require("./module-under-test");
 
-  const NAME = "some name"
+  const NAME = "some name";
 
   td.when(fetchNumberOfFriendsFor(NAME)).thenResolve(5);
 
@@ -130,8 +126,8 @@ Luckily, there is a different way:
 ```typescript
 import * as td from "testdouble";
 // Note the td.replace between imports here:
-td.replace('./slow-operation-to-mock')
-import {fetchNumberOfFriendsFor} from "./slow-operation-to-mock";
+td.replace("./slow-operation-to-mock");
+import { fetchNumberOfFriendsFor } from "./slow-operation-to-mock";
 import { judgeMe } from "./module-under-test";
 
 const NAME = "some name";
@@ -156,22 +152,22 @@ It looks a bit weird but once you learn the pattern you will not think twice abo
 
 The weirdness comes from the fact that we need to run td.replace() before we import the module that will use it. We had to do the same thing with td.replace() and require() calls but that didn't cause us to mix imports and functions calls.
 
-*If you have eslint enabled it might complain about that with:*
+_If you have eslint enabled it might complain about that with:_
 
-*`Import in body of module; reorder to top.(import/first)`*
+_Import in body of module; reorder to top.(import/first)_
 
-*You will have to ignore that rule for the test files in which you use this technique, put `/* eslint-disable import/first */ `at the top of your file*
+_You will have to ignore that rule for the test files in which you use this technique, put `// eslint-disable import/first `at the top of your file_
 
 To have all this work you will have to do one more thing, add a `jest.setup.js` file:
 
 ```typescript
-const td = require('testdouble')
-require('testdouble-jest')(td, jest)
+const td = require("testdouble");
+require("testdouble-jest")(td, jest);
 ```
 
 and add this line to jest config:
 
-```typescript
+```json
 setupFiles: ["./jest.setup.js"],
 ```
 
@@ -182,5 +178,3 @@ I plan to write a ts-jest transformer that does the same thing for testdouble, s
 Here is an example repo with the code: [https://github.com/xolvio/jest-testdouble-replace-typescript-example](https://github.com/xolvio/jest-testdouble-replace-typescript-example?ref=xolvio.ghost.io)
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

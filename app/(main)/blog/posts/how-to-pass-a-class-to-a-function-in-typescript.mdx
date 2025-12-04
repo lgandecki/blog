@@ -44,22 +44,22 @@ Fantastic! Looks easy enough... to copy and paste...
 You (and also, me in the past, at least a few times), all excited, copy the createInstance function and start changing it to your liking, just to find out... it does not work!
 
 ```typescript
-abstract class User {  
-  constructor(public id: string) {}  
-}   
-class Admin extends User {  
-  doAdminThing() {}  
-}  
-  
-class PaidMember extends User {  
-  doPaidMemberThing() {}  
-}  
-  
-function createInstance<A extends User>(c: new () => A): A {  
-  return new c();  
-}  
-  
-createInstance(Admin)
+abstract class User {
+  constructor(public id: string) {}
+}
+class Admin extends User {
+  doAdminThing() {}
+}
+
+class PaidMember extends User {
+  doPaidMemberThing() {}
+}
+
+function createInstance<A extends User>(c: new () => A): A {
+  return new c();
+}
+
+createInstance(Admin);
 // ^ Error: Argument type Admin is not assignable to parameter type {new(): User}
 ```
 
@@ -70,33 +70,39 @@ The trick is to tell TypeScript that it is indeed fine for a class to have a con
 To do that change the `new () => A` to `new (...args) => A`, here how the new `createInstance` function looks like:
 
 ```typescript
-function createInstance<A extends User>(c: new (...args) => A): A {  
-  return new c();  
+function createInstance<A extends User>(c: new (...args) => A): A {
+  return new c();
 }
-createInstance(Admin).doAdminThing() // TypeScript Happy!
-createInstance(PaidMember).doPaidMemberThing() // TypeScript Happy!   
-createInstance(PaidMember).doAdminThing() // TypeScript Sad.. But rightly so this time!
+createInstance(Admin).doAdminThing(); // TypeScript Happy!
+createInstance(PaidMember).doPaidMemberThing(); // TypeScript Happy!
+createInstance(PaidMember).doAdminThing(); // TypeScript Sad.. But rightly so this time!
 ```
+
+note: When I was migrating this blog post to my personal site, google noticed that we are not passing the arguments to the constructor, and suggested this code instead:
+
+```typescript
+function createInstance<A extends User, Args extends any[]>(c: new (...args: Args) => A, ...args: Args): A {
+  return new c(...args);
+}
+```
+
+Back to the original example:
 
 So that is great. Remember the original example? Turns out we can change the `createInstance` function argument type the same way, adding the ...args, and even their example still works (since ...args is fine with 0 arguments).
 
 ```typescript
 // ...
-  
-function createInstance<A extends Animal>(c: new (...args) => A): A {  
-  return new c();  
-}  
-  
-createInstance(Lion).keeper.nametag;  
+
+function createInstance<A extends Animal>(c: new (...args) => A): A {
+  return new c();
+}
+
+createInstance(Lion).keeper.nametag;
 createInstance(Bee).keeper.hasMask;
 ```
-
-``
 
 I can only wonder how many tortured souls went through this problem without a clue, and finally gave up.
 
 Good luck there, TypeScripters :)
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

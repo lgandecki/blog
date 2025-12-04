@@ -19,66 +19,62 @@ Continue reading or watch the video version here:
 
 ## Setup
 
-*If you want to follow along, please clone this repository and start the monorepo app: *[*https://github.com/xolvio/chimp-gql-federation-example*](https://github.com/xolvio/chimp-gql-federation-example?ref=xolvio.ghost.io)*. Our example is straightforward so you should be able to get the idea by watching the video or just reading through the article. If you are in hurry you can also skip directly to the "Generate" section*
+_If you want to follow along, please clone this repository and start the monorepo app: _[_https://github.com/xolvio/chimp-gql-federation-example_](https://github.com/xolvio/chimp-gql-federation-example?ref=xolvio.ghost.io)_. Our example is straightforward so you should be able to get the idea by watching the video or just reading through the article. If you are in hurry you can also skip directly to the "Generate" section_
 
 We have a standard java spring microservice. We will use two of its endpoints. One adds a list, another returns all lists.
 
 Let's first hit them manually, at the beginning, we can see that the list is empty to start with:
 
-```typescript
+```bash
 curl http://localhost:8090/api/lists
 ```
 
 We can add a list:
 
-```typescript
+```bash
 curl --request POST  --url http://localhost:8090/api/lists \
 --header 'cache-control: no-cache' \
 --header 'content-type: application/json' \
 --data '{"text": "First List"}'
 ```
 
-``
-
 And verify that it was added:
 
-```typescript
+```bash
 curl http://localhost:8090/api/lists
 ```
 
-```typescript
-{"id":"b781fdbb-96ba-4057-b41d-4bf6dc5750c9","name":"List one","createdAt":"2020-09-29T08:58:37.225276"}
+&nbsp;
+
+```json
+{ "id": "b781fdbb-96ba-4057-b41d-4bf6dc5750c9", "name": "List one", "createdAt": "2020-09-29T08:58:37.225276" }
 ```
 
 Now let's create our GraphQL app.
 
-```typescript
+```bash
 npx chimp gql:create list-graphql
 ```
 
 Then enter that directory and install dependencies.
 
-```typescript
+```bash
 cd list-graphql
 npm install
 ```
 
-``
-
 Now let's install our generator and the apollo-datasource-rest package
 
-```typescript
+```bash
 npm install --save apollo-datasource-rest
 npm install --save-dev chimp-datasources-generator
 ```
-
-``
 
 ## Generate
 
 With the tooling in place we can finally generate the data sources:
 
-```typescript
+```bash
 npx chimp-datasources-generator create generated/api http://localhost:8090/v3/api-docs.yaml
 ```
 
@@ -94,7 +90,7 @@ export const dataSources = () => ({
 
 Now let's create a schema with our Query for getting all the lists:
 
-```typescript
+```graphql
 type List {
   name: String!
 }
@@ -104,15 +100,11 @@ extend type Query {
 }
 ```
 
-``
-
-``
-
 **src/Lists.graphql**
 
 Now we run the generator to create all the code necessary for implementing that new Query:
 
-```typescript
+```bash
 npm run graphql:generateAll
 ```
 
@@ -130,14 +122,12 @@ test("GetAllLists", async () => {
 
   // Now the interesting part
   // We tell our mock to resolve with that list,
-  // when the controller getLists method is executed without arguments 
-  td.when(
-    context.dataSources.listsApi.TodoListControllerApi.getLists()
-  ).thenResolve(lists);
+  // when the controller getLists method is executed without arguments
+  td.when(context.dataSources.listsApi.TodoListControllerApi.getLists()).thenResolve(lists);
 
   // Now we execute our Query, injecting the context with our mock.
   const result = await testGetAllLists(context);
-  
+
   // And make sure that what we got matches the response from the controller.
   expect(result).toEqual(lists);
 });
@@ -150,18 +140,15 @@ That test will fail with "Error: not implemented yet" which comes from our resol
 Easy. Being guided by the test we know that we should call the controller getLists method without any arguments, and pass the data through.
 
 ```typescript
-export const GetAllListsQuery: QueryResolvers["GetAllLists"] = (
-  parent,
-  args,
-  context
-) => context.dataSources.listsApi.TodoListControllerApi.getLists();
+export const GetAllListsQuery: QueryResolvers["GetAllLists"] = (parent, args, context) =>
+  context.dataSources.listsApi.TodoListControllerApi.getLists();
 ```
 
 Now for the slightly more complicated, mutation.
 
 Let's add it to our schema
 
-```typescript
+```graphql
 # ...
 extend type Mutation {
   AddList(name: String!): List
@@ -172,7 +159,7 @@ extend type Mutation {
 
 And generate the necessary code:
 
-```typescript
+```bash
 npm run graphql:generateAll
 ```
 
@@ -212,11 +199,7 @@ test("AddList", async () => {
 And now for the implementation. This time we are using args to pass the name to the controllers createList method.
 
 ```typescript
-export const AddListMutation: MutationResolvers["AddList"] = (
-  parent,
-  args,
-  context
-) =>
+export const AddListMutation: MutationResolvers["AddList"] = (parent, args, context) =>
   context.dataSources.listsApi.TodoListControllerApi.createList({
     text: args.name,
   });
@@ -228,7 +211,7 @@ Note - everything is typed. You can try to use args.text instead of args.name, m
 
 With everything set up let's make sure that our code actually works!
 
-```typescript
+```bash
 $ PORT=1234 npm start
 (...)
 🚀 Server ready at http://localhost:1234/graphql
@@ -238,7 +221,7 @@ $ PORT=1234 npm start
 
 Let's open the graphql playground and run our query. The combination of tests, types and generated scaffolding gives us very high confidence that things will work as expected.
 
-```typescript
+```graphql
 {
   GetAllLists {
     name
@@ -248,7 +231,7 @@ Let's open the graphql playground and run our query. The combination of tests, t
 
 And mutation:
 
-```typescript
+```graphql
 mutation {
   AddList(name: "Hello") {
     name
@@ -263,5 +246,3 @@ This is clearly a very simple example, but more complex cases should be as strai
 We've effectively removed the mundane. It's your turn to make the interesting (complex, valuable from a business standpoint) flourish!
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

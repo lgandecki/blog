@@ -15,35 +15,33 @@ Assume we deal with a function that returns a rather tangled shape. Keep in mind
 
 ```typescript
 const functionReturningComplexShape = (userId: String) => ({
-    some: {
-      deeply: {
-        nested: {
-          array: ["apple", "potato"],
-        },
+  some: {
+    deeply: {
+      nested: {
+        array: ["apple", "potato"],
       },
     },
-    isItTrue: userId === 'number one',
-})
+  },
+  isItTrue: userId === "number one",
+});
 ```
-
-``
 
 We use it in a different function and do some transformation on it:
 
 ```typescript
-const user = {id: 'userId'}
-const getUserId = u => user.id
+const user = { id: "userId" };
+const getUserId = (u) => user.id;
 
 const consumerFunction = () => {
-  const userId = getUserId(user)
-  const val = functionReturningComplexShape(userId);  
-  const parsedValue = {  
-	  numberOfElements: val.some.deeply.nested.array.length,  
-	  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
-	  wasItTrue: val.isItTrue
+  const userId = getUserId(user);
+  const val = functionReturningComplexShape(userId);
+  const parsedValue = {
+    numberOfElements: val.some.deeply.nested.array.length,
+    fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
+    wasItTrue: val.isItTrue,
   };
-  // 10 more lines of code. 
-}
+  // 10 more lines of code.
+};
 ```
 
 When we do everything in-line like here, it's all nice and clean. It's actually just pure JavaScript!
@@ -52,17 +50,17 @@ It seems only natural that we want to extract the logic.
 But here the problems start.
 
 ```typescript
-const parseIt = (val: any) => ({  
-	  numberOfElements: val.some.deeply.nested.array.length,  
-	  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
-	  wasItTrue: val.isItTrue
-})
+const parseIt = (val: any) => ({
+  numberOfElements: val.some.deeply.nested.array.length,
+  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
+  wasItTrue: val.isItTrue,
+});
 
 const consumerFunction = () => {
-  const userId = getUserId(user)
-  const val = functionReturningComplexShape(userId);  
-  const parsedValue = parseIt(val)
-}
+  const userId = getUserId(user);
+  const val = functionReturningComplexShape(userId);
+  const parsedValue = parseIt(val);
+};
 ```
 
 The original function return type is inferred by TypeScript, which is great. But now, we don't have a way to use a defined type to reuse it in our parseIt function. As I said - many people, after a few frustrated grunts, would just put any and be done with it.
@@ -70,18 +68,18 @@ But we can do better!
 TypeScript gives us ReturnType helper, let's try it:
 
 ```typescript
-// remember to put the `typeof` before the function name. 
-const parseIt = (val: ReturnType<typeof functionReturningComplexShape>) => ({  
-	  numberOfElements: val.some.deeply.nested.array.length,  
-	  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
-	  wasItTrue: val.isItTrue
-})
+// remember to put the `typeof` before the function name.
+const parseIt = (val: ReturnType<typeof functionReturningComplexShape>) => ({
+  numberOfElements: val.some.deeply.nested.array.length,
+  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
+  wasItTrue: val.isItTrue,
+});
 
 const consumerFunction = () => {
-  const userId = getUserId(user)
-  const val = functionReturningComplexShape(userId);  
-  const parsedValue = parseIt(val)
-}
+  const userId = getUserId(user);
+  const val = functionReturningComplexShape(userId);
+  const parsedValue = parseIt(val);
+};
 ```
 
 Nice!
@@ -89,34 +87,34 @@ But, frequently those complex states come from async calls, right? It might be a
 
 ```typescript
 const functionReturningComplexShape = async (userId: String) => ({
-    some: {
-      deeply: {
-        nested: {
-          array: ["apple", "potato"],
-        },
+  some: {
+    deeply: {
+      nested: {
+        array: ["apple", "potato"],
       },
     },
-    isItTrue: userId === 'number one',
-})
+  },
+  isItTrue: userId === "number one",
+});
 
-const parseIt = (val: ReturnType<typeof functionReturningComplexShape>) => ({  
-	  numberOfElements: val.some.deeply.nested.array.length,  
-	  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
-	  wasItTrue: val.isItTrue
-})
+const parseIt = (val: ReturnType<typeof functionReturningComplexShape>) => ({
+  numberOfElements: val.some.deeply.nested.array.length,
+  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
+  wasItTrue: val.isItTrue,
+});
 
 const consumerFunction = async () => {
-  const userId = getUserId(user)
-  const val = await functionReturningComplexShape(userId);  
-  const parsedValue = parseIt(val)
-}
+  const userId = getUserId(user);
+  const val = await functionReturningComplexShape(userId);
+  const parsedValue = parseIt(val);
+};
 ```
 
 Well... It's not pretty. The return type of the function is now hiding behind the promise. TypeScript is not so helpful anymore but there are nice and smart people out there and they figured it out.
 [https://github.com/piotrwitek/utility-types](https://github.com/piotrwitek/utility-types?ref=xolvio.ghost.io) has a bunch of nice utility types that might come very handy, we could use PromiseType from it to construct ReturnPromiseType:
 
 ```typescript
-import { PromiseType } from 'utility-types';
+import { PromiseType } from "utility-types";
 
 type PromiseReturnType<T extends (...args: any) => Promise<any>> = PromiseType<ReturnType<T>>;
 ```
@@ -124,20 +122,18 @@ type PromiseReturnType<T extends (...args: any) => Promise<any>> = PromiseType<R
 Let's give it a try:
 
 ```typescript
-const parseIt = (val: PromiseReturnType<typeof functionReturningComplexShape>) => ({  
-	  numberOfElements: val.some.deeply.nested.array.length,  
-	  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
-	  wasItTrue: val.isItTrue
-})
+const parseIt = (val: PromiseReturnType<typeof functionReturningComplexShape>) => ({
+  numberOfElements: val.some.deeply.nested.array.length,
+  fruitsInTheList: val.some.deeply.nested.array.find((f) => f === "apple"),
+  wasItTrue: val.isItTrue,
+});
 ```
 
 Cool. That worked.
 If we don't want to install the whole package, you can "steal" just that one utility:
 
 ```typescript
-type PromiseType<T extends Promise<any>> = T extends Promise<infer U>  
-  ? U  
-  : never;
+type PromiseType<T extends Promise<any>> = T extends Promise<infer U> ? U : never;
 type PromiseReturnType<T extends (...args: any) => Promise<any>> = PromiseType<ReturnType<T>>;
 ```
 
@@ -148,5 +144,3 @@ Nonetheless, if you want to go deeper, take a look at this article, [https://www
 Enjoy :-)
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

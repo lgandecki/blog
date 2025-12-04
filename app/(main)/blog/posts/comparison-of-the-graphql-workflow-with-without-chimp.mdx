@@ -32,7 +32,7 @@ Take note that we use the `@computed` directive to tell Chimp to generate a fiel
 
 Now generate all the things (using chimp):
 
-```typescript
+```bash
 npm run graphql:generateAll
 ```
 
@@ -52,7 +52,7 @@ And replace throwing an error with returning the object with text:
 
 ```typescript
 export const echoQuery: QueryResolvers["echo"] = (parent, args, context) => ({
-  text: args.text
+  text: args.text,
 });
 ```
 
@@ -61,11 +61,7 @@ Now the field level resolver:
 ```typescript
 import { EchoResponseResolvers } from "@generated/graphql/types";
 
-export const EchoResponseLength: EchoResponseResolvers["length"] = (
-  parent,
-  args,
-  context
-) => {
+export const EchoResponseLength: EchoResponseResolvers["length"] = (parent, args, context) => {
   throw new Error("Not implemented yet");
 };
 ```
@@ -75,11 +71,7 @@ Let's replace the error with returning the length for the text that comes from t
 ```typescript
 import { EchoResponseResolvers } from "@generated/graphql/types";
 
-export const EchoResponseLength: EchoResponseResolvers["length"] = (
-  parent,
-  args,
-  context
-) => parent.text.length;
+export const EchoResponseLength: EchoResponseResolvers["length"] = (parent, args, context) => parent.text.length;
 ```
 
 And that's it! You can start the server (npm start) and check the query:
@@ -92,7 +84,7 @@ We will be using https://github.com/xolvio/chimp-gql-tiny-example repo with the 
 
 Similarly to Chimp - let's create ./src/Echo/Echo.graphql
 
-```typescript
+```graphql
 type EchoResponse {
   text: String!
   length: Int!
@@ -102,8 +94,6 @@ extend type Query {
   echo(text: String!): EchoResponse!
 }
 ```
-
-``
 
 Now we have to manually create the resolvers file and implement it. I usually copy and paste a small resolvers file from a different module and modify it to the shape I need.
 
@@ -131,12 +121,7 @@ Now we need to manually add it to the existing resolvers:
 ```typescript
 // (..)
 import { echoResolvers } from "./Echo/echoResolvers";
-export const resolvers = merge(
-  {},
-  authorResolvers,
-  libraryResolvers,
-  echoResolvers
-);
+export const resolvers = merge({}, authorResolvers, libraryResolvers, echoResolvers);
 ```
 
 ``
@@ -152,5 +137,3 @@ Obviously, you could have manually generated types based on your schema, and the
 And speaking of tests - we generate the scaffolds for your tests. Here we didn't implement them to make the comparison more apples to apples, but they make testing super easy, which is definitely not the case when working with a typical apollo server.
 
 Let me know if you have any questions or thoughts in the comments below.
-
-

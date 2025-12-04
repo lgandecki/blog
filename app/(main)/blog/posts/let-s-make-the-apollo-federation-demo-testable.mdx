@@ -66,8 +66,6 @@ exports.typeDefs = gql`
 
 **typeDefs.js**
 
-``
-
 ```typescript
 exports.resolvers = {
   Product: {
@@ -228,19 +226,19 @@ There are still a lot of things that can go wrong. It’s because the Federated 
 
 Let’s look at our type definitions again:
 
-```typescript
+```graphql
 extend type Product @key(fields: "upc") {
-    upc: String! @external
-    weight: Int @external
-    price: Int @external
-    inStock: Boolean
-    shippingEstimate: Int @requires(fields: "price weight")
+  upc: String! @external
+  weight: Int @external
+  price: Int @external
+  inStock: Boolean
+  shippingEstimate: Int @requires(fields: "price weight")
 }
 ```
 
 Even though I can’t remove (or forget about it in the first place) the *“@key(fields: “upc”)” *directive anymore, because then Product will not be recognized as an Entity that the server can work with, I can still get rid of the
 
-```typescript
+```grahpql
 “@requires(fields: “price weight”)”
 ```
 
@@ -248,7 +246,7 @@ or remove any of the listed fields.
 
 I can remove the whole
 
-```typescript
+```graphql
 weight: Int @external
 ```
 
@@ -314,7 +312,7 @@ Now let’s see what happens when we execute the query, using the federation-tes
 
 We need to install it first, we will also need the @apollo/gateway for testing purposes:
 
-```typescript
+```bash
 npm install --save-dev federation-testing-tool @apollo/gateway
 ```
 
@@ -333,13 +331,13 @@ it("should be 0 for an item with a price over 1000", async () => {
 
 Run the tests.
 
-```typescript
+```bash
 npx jest
 ```
 
 If you are unlucky, you have a pass and start questioning your sanity. More probably you will get something like
 
-```typescript
+```bash
 Expected: 0;
 Received: -14;
 ```
@@ -418,7 +416,7 @@ Let’s see what we can do to separate the concerns of GraphQL configuration fro
 
 We want to have a separate estimateShipping function that will take an object argument with weight and price. In the spirit of TDD we will first specify how we want to use it, and only then implement it. My mocking tool of choice is the fantastic TestDouble.js by [Justin Searls](https://medium.com/u/5af30eb2c20d?ref=xolvio.ghost.io) (of which he was nice enough to make me one of the maintainers recently — full disclosure :-) ), let’s install, configure and put it to use.
 
-```typescript
+```bash
 npm install --save-dev testdouble testdouble-jest
 ```
 
@@ -572,5 +570,3 @@ There is more to the federation-testing-tool —  the ability to pass the co
 I’ve been working on testing tooling for a few years now, and always wanted to start sharing my experience in writing. My focus circles around testing in general, React and GraphQL/Apollo in particular.  If you liked this article, I’d appreciate a few claps, a follow on Twitter [Lukasz Gandecki](https://medium.com/u/ad5f2253c98a?ref=xolvio.ghost.io) to hear about the next articles, and if you have a moment to spare, maybe some feedback, here, or in the federation-testing-tool repo.
 
 Let me know if you have any questions or thoughts in the comments below.
-
-
