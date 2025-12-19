@@ -18,7 +18,7 @@ export const recentProjects: RecentProject[] = [
   {
     title: "2001: A Space Odyssey Book Soundtrack",
     image: "hal-9000.webp",
-    description: "Read while listening Listen to HAL generated music",
+    description: "Read while listening to HAL generated music",
     link: "https://example.com/odyssey-music",
     tags: ["suno", "convex", "ai"],
   },
