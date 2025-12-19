@@ -7,9 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { ProjectCarousel } from "@/components/project-carousel";
+import { RecentProjectsCarousel } from "@/components/recent-projects-carousel";
 import { ChromaLogos } from "@/components/chroma-logos";
-import { formatDate, getBlogPosts } from "./blog/utils";
+import { DevLogEntry } from "@/components/devlog-entry";
+import { getBlogPosts } from "./blog/utils";
+import { getDevLogPosts } from "./devlog/utils";
 import { codeProjects } from "./codeProjects";
+import { recentProjects } from "./recentProjects";
+
+function formatDate(date: string) {
+  if (!date.includes("T")) {
+    date = `${date}T00:00:00`;
+  }
+  const targetDate = new Date(date);
+  return targetDate.toLocaleString("en-us", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
 
 const companyLogos = [
   {
@@ -73,9 +89,13 @@ export const contactLinks = [
 ];
 
 export default async function Page() {
-  let posts = getBlogPosts()
+  const posts = getBlogPosts()
     .sort((a, b) => new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime())
     .slice(0, 3);
+
+  const devLogPosts = getDevLogPosts()
+    .sort((a, b) => new Date(b.metadata.publishedAt).getTime() - new Date(a.metadata.publishedAt).getTime())
+    .slice(0, 5);
 
   return (
     <div className="bg-background text-foreground">
@@ -130,23 +150,27 @@ export default async function Page() {
         </Card>
       </section>
 
-      <section id="writing" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
-        <div className="mb-12 flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Recent Writing</h2>
+      <section id="recent-projects" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
+        <h2 className="mb-12 text-3xl font-bold tracking-tight">Recent Projects</h2>
+        <RecentProjectsCarousel projects={recentProjects} />
+      </section>
+
+      <section id="articles" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
+        <div className="mb-8 flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Articles</h2>
           <Button variant="ghost" asChild>
-            <Link href="/blog">View All Posts →</Link>
+            <Link href="/blog">View All →</Link>
           </Button>
         </div>
         <div className="space-y-8">
           {posts.map((post) => {
-            let excerpt = post.metadata.summary || `${post.content.replace(/\s+/g, " ").trim().slice(0, 160)}…`;
+            const excerpt = post.metadata.summary || `${post.content.replace(/\s+/g, " ").trim().slice(0, 160)}…`;
 
             return (
               <article key={post.slug} className="group">
                 <Link href={`/blog/${post.slug}`} className="block sm:flex sm:gap-4">
                   {post.metadata.heroImage && (
                     <>
-                      {/* Mobile: wide banner */}
                       <div className="relative sm:hidden w-full h-32 mb-3 overflow-hidden rounded-md">
                         <Image
                           src={post.metadata.heroImage}
@@ -157,7 +181,6 @@ export default async function Page() {
                           {...(post.heroImageBlur && { placeholder: "blur", blurDataURL: post.heroImageBlur })}
                         />
                       </div>
-                      {/* Desktop: side thumbnail */}
                       <div className="relative hidden sm:block h-24 w-36 flex-shrink-0 overflow-hidden rounded-md">
                         <Image
                           src={post.metadata.heroImage}
@@ -183,6 +206,20 @@ export default async function Page() {
           })}
         </div>
       </section>
+
+      {/* <section id="devlog" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
+        <div className="mb-8 flex items-center justify-between">
+          <h2 className="text-3xl font-bold tracking-tight">Dev Log</h2>
+          <Button variant="ghost" asChild>
+            <Link href="/devlog">View All →</Link>
+          </Button>
+        </div>
+        <div className="devlog-feed max-w-xl">
+          {devLogPosts.map((post, index) => (
+            <DevLogEntry key={post.slug} post={post} isLast={index === devLogPosts.length - 1} />
+          ))}
+        </div>
+      </section> */}
 
       <section id="contact" className="mx-auto w-full max-w-5xl border-t border-border px-6 py-20">
         <div className="max-w-3xl">

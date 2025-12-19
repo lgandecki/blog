@@ -41,3 +41,4 @@ public/video-assets-old/
 
 .claude/settings.local.json
 hero-images-archive/
+.env.local
