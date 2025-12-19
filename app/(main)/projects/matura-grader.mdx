@@ -1,0 +1,16 @@
+# Matura Grader
+
+Generic LLMs are great at chatting, but mediocre at grading according to a strict rubric.
+
+If a student pastes their essay into ChatGPT, it often hallucinates outdated criteria (e.g., using the pre-2023 50-point scale instead of the current 35). It gives more of a "thumbs up" instead of a rigorous breakdown a teacher provides.
+
+To that end - I just released MaturaGrader.
+
+It helps Polish students grade their practice essays for the "Matura" exam (SAT/A-Level equivalent). It parses the essay, runs it against the official, up-to-date rubrics using Gemini 3.0 Pro, and returns a precise score breakdown.
+
+Tech Stack: Next.js with Convex & Vercel AI SDK
+
+To keep this free for students without burning my API credits, I had to implement a 3-layer custom abuse prevention system (I’ll share a technical deep dive on that architecture soon).
+
+Live at https://zpolaka.pl
+Code: https://github.com/lgandecki/MaturaGradeNext

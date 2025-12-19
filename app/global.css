@@ -420,3 +420,76 @@ table {
 .carousel-dot.active {
   background-color: hsl(var(--accent));
 }
+
+/* Recent Projects Carousel */
+.recent-projects-carousel {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  cursor: grab;
+  padding-bottom: 0.5rem;
+  user-select: none;
+  -webkit-user-select: none;
+  mask-image: linear-gradient(to right, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+}
+
+@media (max-width: 640px) {
+  .recent-projects-carousel {
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.recent-projects-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.recent-projects-carousel.is-dragging {
+  cursor: grabbing;
+}
+
+.recent-project-card {
+  flex: 0 0 calc(28% - 0.5rem);
+  min-width: 280px;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+
+.recent-project-card:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 1024px) {
+  .recent-project-card {
+    flex: 0 0 calc(45% - 0.5rem);
+    min-width: 260px;
+  }
+}
+
+@media (max-width: 640px) {
+  .recent-project-card {
+    flex: 0 0 calc(80% - 0.5rem);
+    min-width: 240px;
+  }
+}
+
+/* Dev Log */
+.devlog-feed {
+  max-width: 600px;
+}
+
+.devlog-entry {
+  transition: background-color 0.15s ease;
+}
+
+.line-clamp-4 {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}

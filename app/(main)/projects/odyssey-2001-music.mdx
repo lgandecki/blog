@@ -1,0 +1,14 @@
+### Space Odyssey Music Companion
+
+A lightweight web companion that adds a film-like soundtrack to **Arthur C. Clarke’s _2001: A Space Odyssey_**.
+
+While reading the paper book, I kept wanting the same kind of “adaptive mood” experience I’d built into BookGenius: music that supports the scene without pulling you out of the page. So I used suno to generate a chapter-aware soundtrack and wrapped it in a **minimal, HAL-inspired player UI** that works beautifully on both mobile and desktop.
+
+Under the hood, it doubles as a real-world testbed for my reusable Convex content/asset management approach: tracks can be swapped in the admin panel and served via CDN, and the client picks up changes without any manual re-uploading or redeploying.
+
+**What it does**
+
+- **Chapter-based soundtrack**: one track per chapter (perfect fit for Odyssey’s short chapters, in bookgenius we often change music mid-chapter).
+- **HAL-style interface**: focused, immersive UI with a subtle “alive” feel while playing.
+- **Responsive by design**: made to feel good on phone and desktop.
+- **Content-managed tracks**: add/replace tracks in minutes; client stays in sync.
