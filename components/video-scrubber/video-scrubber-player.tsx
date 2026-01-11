@@ -17,7 +17,9 @@ import {
   MonitorPlay,
   BookOpen,
   Search,
+  Share2,
 } from "lucide-react";
+import { ShareModal } from "./share-modal";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import styles from "./video-scrubber.module.css";
@@ -146,6 +148,7 @@ export function VideoScrubberPlayer({
   const [activeView, setActiveView] = useState<"timestamps" | "playlist">("timestamps");
   const [showSpeedSlider, setShowSpeedSlider] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const speedSliderRef = useRef<HTMLDivElement>(null);
   const sidebarContentRef = useRef<HTMLDivElement>(null);
   const timestampItemsRef = useRef<Map<number, HTMLButtonElement>>(new Map());
@@ -493,6 +496,15 @@ export function VideoScrubberPlayer({
           <span className={cn(styles.skipMuteLabel, themeStyles.skipMuteLabel)}>Skip silence</span>
         </label>
 
+        {/* Share button */}
+        <button
+          className={cn(styles.shareButton, themeStyles.shareButton)}
+          onClick={() => setShareModalOpen(true)}
+          aria-label="Share"
+        >
+          <Share2 size={18} />
+        </button>
+
         {/* Sidebar toggle */}
         <button
           className={cn(styles.sidebarToggle, themeStyles.sidebarToggle)}
@@ -519,6 +531,15 @@ export function VideoScrubberPlayer({
           />
         </div>
       </div>
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={shareModalOpen}
+        onClose={() => setShareModalOpen(false)}
+        currentTime={scrubber.currentTime}
+        duration={scrubber.duration}
+        formatTime={scrubber.formatTime}
+      />
     </div>
   );
 }
