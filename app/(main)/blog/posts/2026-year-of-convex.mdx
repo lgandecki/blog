@@ -33,33 +33,33 @@ I hate clicking around dashboards. I have bad memory. I want to have all the kno
 Convex is an amazing database combined with a backend, all defined in TypeScript. It gives you:
 
 - **Generated queries and mutations** — Import them directly into your frontend. No manual API layer needed.
-- **End-to-end type safety** — From database schema to React component, everything is typed. This makes it super easy for me, but also, which recently gets even more important, AI Agents - they understand the codebase end to end, and with a proper tooling, they fly through making changes that just work one-shot with a proper prompt.
+- **End-to-end type safety** — From database schema to React component, everything is typed. This makes it super easy for me, but also—and this is becoming increasingly important—for AI Agents, which understand the codebase end to end and, with proper tooling and the right prompt, can make changes that work on the first try.
 - **Reactive by default** — Like Meteor was, but better. (I do miss the DX of just using minimongo, but I also understand its caveats especially the scaling issues and maintainability.) In Convex - whenever you make a query (any query!) it observes changes. Inserts and updates automatically refresh the relevant queries. No polling, no manual cache invalidation. There is a bit of extra work to get optimistic updates, but its a repeatable pattern, and with the types, once you show agents an example, they can just do it themselves.
 
 It's built by former Dropbox engineers. These folks know distributed systems. They know scale. And at the end of 2024, they secured substantial funding, which tells me this isn't going anywhere.
 
 ## The BookGenius Rewrite
 
-I was convinced enough to rewrite [BookGenius](https://bookgenius.fun) from a custom Cloudflare (r2+workers as a "storage db") solution entirely on Convex. Took me about 3 weeks. The results?
+I was convinced enough to rewrite [BookGenius](https://bookgenius.net) from a custom Cloudflare (r2+workers as a "storage db") solution entirely on Convex. Took me about 3 weeks. The results?
 
 You can now edit books directly from within the app itself. Everything optimistically updates. Click save, see the change immediately, and trust that it persisted correctly. The kind of UX that used to require careful React Query setup, optimistic update handlers, and rollback logic—it just _works_ out of the box.
 
-And it still uses r2 for delivering files to the user. I built my [asset manager](https://github.com/lgandecki/convex-versioned-assets) on top of convex's r2 component.
+And it still uses r2 for delivering files to the user. I built my [asset manager](https://github.com/lgandecki/convex-versioned-assets) on top of Convex's r2 component.
 So, all in all, the whole system is virtually free under normal usage, and at the same time its ready if tomorrow I'm hit with viral traffic.
 
 ## The Pricing That Makes Sense
 
 Unlike Mongo where I was paying for every single project, Convex flipped the model:
 
-- **Free tier** — Start for free. Create up to ~50 databases. No credit card, no "free trial" nonsense. The free tier is very generous, and unlike many "free tier dbs" app is as fast with it as with the pro tier.
-- **Pro tier** — $25/month for your entire account. Not per database. Not per project. Your whole account. Creating a new "db" is one cli command, and everything is setup and ready. Brilliant. I made a bunch of small apps just for fun. It doesn't feel like I'm actually using a DB.
+- **Free tier** — Start for free. Create up to ~50 databases. No credit card, no "free trial" nonsense. The free tier is very generous, and unlike many "free tier DBs", apps on it run as fast as with the pro tier.
+- **Pro tier** — $25/month for your entire account. Not per database. Not per project. Your whole account. Creating a new "DB" is one cli command, and everything is setup and ready. Brilliant. I made a bunch of small apps just for fun. It doesn't feel like I'm actually using a DB.
 
 ## Looking Ahead
 
 I see the same opportunity here that I saw with Meteor and later with Apollo. A technology that genuinely makes developers' lives better, with a team that understands the problems deeply.
 
 Unfortunately, Meteor got abandoned, and Apollo focused on the enterprise.
-I can't complain, because company I was a co-founder of - xolv.io - was the first official Apollo Development Partner, and we've had a good run helping large companies implement GraphQL into their systems.
+I can't complain, because the company I was a co-founder of - xolv.io - was the first official Apollo Development Partner, and we've had a good run helping large companies implement GraphQL into their systems.
 
 But that was never fun, for small projects it was an overkill. And it still required a separate DB anyway.
 
